@@ -1,4 +1,10 @@
-/* frontend/src/index.css */
+/* Reset básico */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -6,7 +12,8 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f9fafb; /* Um cinza claro similar ao bg-gray-50 do Tailwind */
+  background-color: #f9fafb;
+  line-height: 1.5;
 }
 
 code {
@@ -14,4 +21,66 @@ code {
     monospace;
 }
 
-/* Adicione aqui outros estilos globais que você precisar */
+/* Garantir que o root ocupe toda a altura */
+#root {
+  min-height: 100vh;
+}
+
+/* Estilos para elementos de formulário */
+input, select, textarea {
+  font-family: inherit;
+}
+
+/* Remover outline padrão e adicionar focus personalizado */
+input:focus, select:focus, textarea:focus, button:focus {
+  outline: none;
+}
+
+/* Estilos para scroll suave */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Garantir que SVGs sejam responsivos */
+svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Classes utilitárias adicionais que podem não estar no Tailwind CDN */
+.shadow-custom {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.border-custom {
+  border: 1px solid #e5e7eb;
+}
+
+/* Animações customizadas */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Responsividade para dispositivos muito pequenos */
+@media (max-width: 480px) {
+  .container-mobile {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+/* Print styles */
+@media print {
+  body {
+    background: white;
+  }
+  
+  .no-print {
+    display: none;
+  }
+}
