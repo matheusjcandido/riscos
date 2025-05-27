@@ -2,9 +2,11 @@
   "base_riscos_cea": {
     "metadata": {
       "orgao": "Centro de Engenharia e Arquitetura - Secretaria de Segurança Pública do Paraná",
-      "versao": "1.0",
+      "versao": "2.0",
       "total_riscos": 50,
-      "data_criacao": "2025-05-26"
+      "data_criacao": "2025-05-26",
+      "data_atualizacao": "2025-05-27",
+      "features": ["advanced_selection", "regime_execucao", "debug_info"]
     },
     "escala_probabilidade": {
       "1": "Muito Baixa - Evento sem registro de ocorrência",
@@ -22,9 +24,174 @@
     },
     "nivel_risco": {
       "1-2": "Baixo",
-      "3-6": "Moderado",
+      "3-6": "Moderado", 
       "8-12": "Alto",
       "15-25": "Extremo"
+    },
+    "regimes_execucao": {
+      "empreitada_global": {
+        "nome": "Empreitada por preço global",
+        "descricao": "Contratação da execução da obra por preço total fixo",
+        "riscos_especificos": [3, 5, 8],
+        "riscos_reduzidos": []
+      },
+      "empreitada_unitario": {
+        "nome": "Empreitada por preço unitário", 
+        "descricao": "Contratação com pagamento por medições de itens executados",
+        "riscos_especificos": [20, 40],
+        "riscos_reduzidos": []
+      },
+      "contratacao_integrada": {
+        "nome": "Contratação integrada",
+        "descricao": "Contratação que inclui elaboração e execução de projetos",
+        "riscos_especificos": [1, 2, 23, 37],
+        "riscos_reduzidos": []
+      },
+      "empreitada_integral": {
+        "nome": "Empreitada integral",
+        "descricao": "Contratação de todas as etapas da obra",
+        "riscos_especificos": [1, 9, 28, 42],
+        "riscos_reduzidos": []
+      },
+      "tarefa": {
+        "nome": "Contratação por tarefa",
+        "descricao": "Contratação de mão de obra para pequenos trabalhos",
+        "riscos_especificos": [],
+        "riscos_reduzidos": [1, 4, 9]
+      }
+    },
+    "tipos_intervencao": {
+      "construcao": {
+        "nome": "Construção",
+        "descricao": "Construção de nova edificação",
+        "riscos_especificos": [1, 9, 21, 22],
+        "riscos_reduzidos": []
+      },
+      "reforma": {
+        "nome": "Reforma", 
+        "descricao": "Modificação de edificação existente",
+        "riscos_especificos": [25, 29, 38, 44],
+        "riscos_reduzidos": []
+      },
+      "reparos": {
+        "nome": "Reparos",
+        "descricao": "Correções e manutenções pontuais",
+        "riscos_especificos": [11, 28, 32],
+        "riscos_reduzidos": [1, 4, 9]
+      }
+    },
+    "faixas_valor": {
+      "ate_100k": {
+        "descricao": "Até R$ 100.000",
+        "riscos_especificos": [],
+        "riscos_reduzidos": [1, 4, 23, 37]
+      },
+      "100k_500k": {
+        "descricao": "R$ 100.001 a R$ 500.000", 
+        "riscos_especificos": [],
+        "riscos_reduzidos": []
+      },
+      "500k_1m": {
+        "descricao": "R$ 500.001 a R$ 1.000.000",
+        "riscos_especificos": [],
+        "riscos_reduzidos": []
+      },
+      "1m_5m": {
+        "descricao": "R$ 1.000.001 a R$ 5.000.000",
+        "riscos_especificos": [23, 37],
+        "riscos_reduzidos": []
+      },
+      "acima_5m": {
+        "descricao": "Acima de R$ 5.000.000",
+        "riscos_especificos": [1, 4, 9, 23, 37, 46],
+        "riscos_reduzidos": []
+      }
+    },
+    "faixas_prazo": {
+      "ate_6m": {
+        "descricao": "Até 6 meses",
+        "riscos_especificos": [10, 12, 19],
+        "riscos_reduzidos": []
+      },
+      "6m_12m": {
+        "descricao": "6 a 12 meses",
+        "riscos_especificos": [],
+        "riscos_reduzidos": []
+      },
+      "12m_24m": {
+        "descricao": "12 a 24 meses", 
+        "riscos_especificos": [],
+        "riscos_reduzidos": []
+      },
+      "acima_24m": {
+        "descricao": "Acima de 24 meses",
+        "riscos_especificos": [11, 35, 48],
+        "riscos_reduzidos": []
+      }
+    },
+    "caracteristicas_especiais": {
+      "obra_funcionamento": {
+        "nome": "Obra em unidade em funcionamento",
+        "riscos_especificos": [25, 38],
+        "riscos_reduzidos": []
+      },
+      "licenciamento_ambiental": {
+        "nome": "Necessita licenciamento ambiental", 
+        "riscos_especificos": [9, 36],
+        "riscos_reduzidos": []
+      },
+      "alta_seguranca": {
+        "nome": "Área de segurança máxima",
+        "riscos_especificos": [10, 12, 13, 15],
+        "riscos_reduzidos": []
+      },
+      "integracao_sistemas": {
+        "nome": "Integração com sistemas existentes",
+        "riscos_especificos": [14, 29, 34, 44],
+        "riscos_reduzidos": []
+      },
+      "demolicao": {
+        "nome": "Demolição de estruturas",
+        "riscos_especificos": [19, 36], 
+        "riscos_reduzidos": []
+      },
+      "instalacoes_especiais": {
+        "nome": "Instalações especiais (blindagem, etc.)",
+        "riscos_especificos": [2, 15, 18],
+        "riscos_reduzidos": []
+      }
+    },
+    "tipos_obra": {
+      "presidios": {
+        "riscos_especificos": [1, 9, 10, 12, 13, 14, 15, 25, 30, 36, 38, 49],
+        "descricao": "Estabelecimentos penais com requisitos de alta segurança",
+        "peso_seguranca": 5,
+        "complexidade_base": 4
+      },
+      "delegacias": {
+        "riscos_especificos": [1, 2, 14, 16, 17, 21, 27, 30, 37, 44],
+        "descricao": "Unidades policiais com necessidades de segurança moderada a alta",
+        "peso_seguranca": 3,
+        "complexidade_base": 3
+      },
+      "quarteis": {
+        "riscos_especificos": [1, 16, 17, 21, 27, 34, 37, 44, 45, 47],
+        "descricao": "Instalações militares com requisitos específicos",
+        "peso_seguranca": 3,
+        "complexidade_base": 3
+      },
+      "centrais_operacionais": {
+        "riscos_especificos": [2, 14, 16, 17, 29, 30, 32, 34, 40, 49],
+        "descricao": "Centrais de comando e controle",
+        "peso_seguranca": 4,
+        "complexidade_base": 4
+      },
+      "centros_treinamento": {
+        "riscos_especificos": [21, 27, 32, 34, 43, 45, 47],
+        "descricao": "Centros de formação e treinamento",
+        "peso_seguranca": 2,
+        "complexidade_base": 2
+      }
     },
     "riscos": [
       {
