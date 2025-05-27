@@ -4,6 +4,9 @@
     "react-app/jest"
   ],
   "rules": {
-    "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }]
+    "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
+    "default-case": "off",
+    "default-case-last": "off",
+    "no-fallthrough": "warn"
   }
 }
