@@ -28,7 +28,8 @@
   ],
   "build": {
     "env": {
-      "GENERATE_SOURCEMAP": "false"
+      "GENERATE_SOURCEMAP": "false",
+      "CI": "false"
     }
   },
   "outputDirectory": "frontend/build"
