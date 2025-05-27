@@ -1,0 +1,37 @@
+{
+  "name": "risk-matrix-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "react": "^18.2.0",          // Ou a versão mais recente
+    "react-dom": "^18.2.0",      // Ou a versão mais recente
+    "react-scripts": "5.0.1"     // Padrão do Create React App; se usar Vite, a estrutura é diferente
+    // Adicione 'lucide-react' aqui ou instale via npm/yarn
+    // "lucide-react": "^0.x.x"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "proxy": "http://localhost:5001" // Proxy para o backend Flask em desenvolvimento
+}
