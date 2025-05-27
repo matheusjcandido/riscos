@@ -26,5 +26,10 @@
       "dest": "frontend/$1"
     }
   ],
+  "build": {
+    "env": {
+      "GENERATE_SOURCEMAP": "false"
+    }
+  },
   "outputDirectory": "frontend/build"
 }
