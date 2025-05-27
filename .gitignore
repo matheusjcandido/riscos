@@ -1,0 +1,68 @@
+# Dependency directories
+frontend/node_modules/
+api/venv/
+api/instance/ # Para Flask, se usar config.py
+
+# Python
+api/__pycache__/
+api/*.pyc
+api/*.pyo
+api/*.pyd
+api/.Python
+api/build/
+api/develop-eggs/
+api/dist/
+api/downloads/
+api/eggs/
+api/.eggs/
+api/lib/
+api/lib64/
+api/parts/
+api/sdist/
+api/var/
+api/wheels/
+api/share/python-wheels/
+api/*.egg-info/
+api/.installed.cfg
+api/*.egg
+api/MANIFEST
+
+# Frontend (React - Create React App / Vite)
+frontend/build/
+frontend/dist/ # Para Vite
+frontend/.pnp
+frontend/.pnp.js
+frontend/coverage/
+frontend/.DS_Store
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# Environment variables
+.env
+.env*.local
+.env.*.local
+frontend/.env
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+api/.env
+
+# IDEs and system files
+.vscode/
+.idea/
+*.project
+.classpath
+*.launch
+.settings/
+*.sublime-workspace
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Misc
+.DS_Store
+Thumbs.db
