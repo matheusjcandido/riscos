@@ -3,16 +3,16 @@ import { ChevronRight, Download, Edit2, AlertTriangle, CheckCircle, Building2, D
 
 // Constantes de dados
 const forcas = [
-  'Corpo de Bombeiros Militar',
+  'Corpo de Bombeiros (CBMPR)',
   'Polícia Científica',
   'Polícia Civil',
-  'Polícia Militar',
+  'Polícia Militar (PMPR)',
   'Polícia Penal'
 ];
 
 const tiposUnidade = {
-  'Corpo de Bombeiros Militar': ['Pelotão', 'Companhia', 'Companhia Independente', 'Batalhão', 'Comando Regional'],
-  'Polícia Militar': ['Pelotão', 'Companhia', 'Companhia Independente', 'Batalhão', 'Comando Regional'],
+  'Corpo de Bombeiros (CBMPR)': ['Pelotão', 'Companhia', 'Companhia Independente', 'Batalhão', 'Comando Regional'],
+  'Polícia Militar (PMPR)': ['Pelotão', 'Companhia', 'Companhia Independente', 'Batalhão', 'Comando Regional'],
   'Polícia Civil': ['Delegacia Cidadã Tipo IA', 'Delegacia Cidadã Tipo II', 'Delegacia Cidadã Tipo III'],
   'Polícia Penal': ['Cadeia Pública', 'Penitenciária Estadual'],
   'Polícia Científica': ['Posto Avançado', 'UETC (Unidade Especializada Técnico-Científica)']
@@ -144,6 +144,9 @@ const RiskMatrixApp = () => {
         criteria.excluded_risks.push(...[1, 4, 9]); // Exclui riscos de planejamento complexo
         criteria.debug_logic.push('- Riscos de planejamento complexo (tarefa simples)');
         break;
+      default:
+        criteria.debug_logic.push('Regime de execução não reconhecido ou não informado');
+        break;
     }
 
     // 4. MODIFICADORES POR FAIXA DE VALOR
@@ -156,6 +159,9 @@ const RiskMatrixApp = () => {
         criteria.additional_risks.push(...[1, 4, 9, 23, 37, 46]); // Obra grande, mais riscos
         criteria.debug_logic.push('+ Riscos de alta complexidade (valor alto)');
         break;
+      default:
+        criteria.debug_logic.push('Faixa de valor intermediária - sem modificadores específicos');
+        break;
     }
 
     // 5. MODIFICADORES POR PRAZO
@@ -167,6 +173,9 @@ const RiskMatrixApp = () => {
       case 'acima-24m':
         criteria.additional_risks.push(...[11, 35, 48]); // Riscos de longo prazo
         criteria.debug_logic.push('+ Riscos de longo prazo (obsolescência, atualizações)');
+        break;
+      default:
+        criteria.debug_logic.push('Prazo intermediário - sem modificadores específicos');
         break;
     }
 
@@ -196,6 +205,9 @@ const RiskMatrixApp = () => {
         case 'Instalações especiais (blindagem, etc.)':
           criteria.additional_risks.push(...[2, 15, 18]);
           criteria.debug_logic.push('+ Riscos de instalações especializadas');
+          break;
+        default:
+          criteria.debug_logic.push(`Característica não reconhecida: ${caracteristica}`);
           break;
       }
     });
