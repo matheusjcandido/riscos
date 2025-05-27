@@ -1,24 +1,33 @@
 import React, { useState } from 'react';
-import { ChevronRight, Download, Edit2, AlertTriangle, CheckCircle, Building2, DollarSign, Settings, Info } from 'lucide-react';
+import { ChevronRight, Download, Edit2, AlertTriangle, CheckCircle, Building2, DollarSign, Settings, Info, FileText } from 'lucide-react';
 
 // Constantes de dados
 const forcas = [
-  'Corpo de Bombeiros (CBMPR)',
+  'Corpo de Bombeiros Militar',
   'Polícia Científica',
   'Polícia Civil',
-  'Polícia Militar (PMPR)',
+  'Polícia Militar',
   'Polícia Penal'
 ];
 
 const tiposUnidade = {
-  'Corpo de Bombeiros (CBMPR)': ['Pelotão', 'Companhia', 'Companhia Independente', 'Batalhão', 'Comando Regional'],
-  'Polícia Militar (PMPR)': ['Pelotão', 'Companhia', 'Companhia Independente', 'Batalhão', 'Comando Regional'],
+  'Corpo de Bombeiros Militar': ['Pelotão', 'Companhia', 'Companhia Independente', 'Batalhão', 'Comando Regional'],
+  'Polícia Militar': ['Pelotão', 'Companhia', 'Companhia Independente', 'Batalhão', 'Comando Regional'],
   'Polícia Civil': ['Delegacia Cidadã Tipo IA', 'Delegacia Cidadã Tipo II', 'Delegacia Cidadã Tipo III'],
   'Polícia Penal': ['Cadeia Pública', 'Penitenciária Estadual'],
   'Polícia Científica': ['Posto Avançado', 'UETC (Unidade Especializada Técnico-Científica)']
 };
 
 const tiposIntervencao = ['Construção', 'Reforma', 'Reparos'];
+
+// Novos regimes de execução baseados na Lei 14.133/2021 (Nova Lei de Licitações)
+const regimesExecucao = [
+  'Empreitada por preço global',
+  'Empreitada por preço unitário',
+  'Contratação por tarefa',
+  'Empreitada integral',
+  'Contratação integrada'
+];
 
 const caracteristicasEspeciais = [
   'Obra em unidade em funcionamento',
@@ -43,14 +52,16 @@ const RiskMatrixApp = () => {
     forca: '',
     tipoUnidade: '',
     tipoIntervencao: '',
+    regimeExecucao: '', // Novo campo
     valor: '',
     prazo: '',
-    complexidade: 3,
     caracteristicas: []
+    // Removido: complexidade
   });
   const [selectedRisks, setSelectedRisks] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState(null);
+  const [debugInfo, setDebugInfo] = useState(null); // Para mostrar lógica de seleção
 
   const handleInputChange = (field, value) => {
     setProjectData(prev => {
@@ -71,24 +82,129 @@ const RiskMatrixApp = () => {
     }));
   };
 
-  const getTipoObraChave = (projData) => {
+  // Lógica APRIMORADA de seleção de riscos
+  const getAdvancedRiskCriteria = (projData) => {
+    const criteria = {
+      tipo_obra_chave: null,
+      risk_multipliers: {},
+      additional_risks: [],
+      excluded_risks: [],
+      debug_logic: []
+    };
+
+    // 1. MAPEAMENTO PRINCIPAL - Força + Tipo de Unidade
     if (projData.forca === 'Polícia Penal' && (projData.tipoUnidade === 'Cadeia Pública' || projData.tipoUnidade === 'Penitenciária Estadual')) {
-      return 'presidios';
-    }
-    if (projData.forca === 'Polícia Civil' && projData.tipoUnidade?.startsWith('Delegacia')) {
-      return 'delegacias';
-    }
-    if ((projData.forca === 'Corpo de Bombeiros (CBMPR)' || projData.forca === 'Polícia Militar (PMPR)')) {
+      criteria.tipo_obra_chave = 'presidios';
+      criteria.debug_logic.push('Mapeamento: Polícia Penal → presidios');
+    } else if (projData.forca === 'Polícia Civil' && projData.tipoUnidade?.startsWith('Delegacia')) {
+      criteria.tipo_obra_chave = 'delegacias';
+      criteria.debug_logic.push('Mapeamento: Polícia Civil → delegacias');
+    } else if ((projData.forca === 'Corpo de Bombeiros (CBMPR)' || projData.forca === 'Polícia Militar (PMPR)')) {
       if (['Pelotão', 'Companhia', 'Companhia Independente', 'Batalhão', 'Comando Regional'].includes(projData.tipoUnidade)) {
-          return 'quarteis'; 
+        criteria.tipo_obra_chave = 'quarteis';
+        criteria.debug_logic.push(`Mapeamento: ${projData.forca} → quarteis`);
       }
+    } else if (projData.forca === 'Polícia Científica' && projData.tipoUnidade === 'UETC (Unidade Especializada Técnico-Científica)') {
+      criteria.tipo_obra_chave = 'centrais_operacionais';
+      criteria.debug_logic.push('Mapeamento: Polícia Científica UETC → centrais_operacionais');
     }
-    if (projData.forca === 'Polícia Científica' && projData.tipoUnidade === 'UETC (Unidade Especializada Técnico-Científica)') {
-      return 'centrais_operacionais';
+
+    // 2. MODIFICADORES POR TIPO DE INTERVENÇÃO
+    if (projData.tipoIntervencao === 'Construção') {
+      criteria.additional_risks.push(...[1, 9, 21, 22]); // Riscos específicos de construção nova
+      criteria.debug_logic.push('+ Riscos de construção nova (planejamento, licenciamento, sustentabilidade)');
+    } else if (projData.tipoIntervencao === 'Reforma') {
+      criteria.additional_risks.push(...[25, 29, 38, 44]); // Riscos de integração e operação
+      criteria.debug_logic.push('+ Riscos de reforma (integração, operação em funcionamento)');
+    } else if (projData.tipoIntervencao === 'Reparos') {
+      criteria.additional_risks.push(...[11, 28, 32]); // Riscos menores, mais técnicos
+      criteria.excluded_risks.push(...[1, 4, 9]); // Exclui riscos de planejamento complexo
+      criteria.debug_logic.push('+ Riscos de reparos (técnicos) / - Riscos de planejamento complexo');
     }
-    
-    console.warn("Não foi possível mapear 'tipoUnidade' para 'tipo_obra_chave'. Tipo Unidade:", projData.tipoUnidade);
-    return null;
+
+    // 3. MODIFICADORES POR REGIME DE EXECUÇÃO
+    switch (projData.regimeExecucao) {
+      case 'Empreitada por preço global':
+        criteria.additional_risks.push(...[3, 5, 8]); // Riscos de orçamento e qualificação
+        criteria.debug_logic.push('+ Riscos de preço global (orçamento, qualificação)');
+        break;
+      case 'Empreitada por preço unitário':
+        criteria.additional_risks.push(...[20, 40]); // Riscos de medição e comissionamento
+        criteria.debug_logic.push('+ Riscos de preço unitário (medição, comissionamento)');
+        break;
+      case 'Contratação integrada':
+        criteria.additional_risks.push(...[1, 2, 23, 37]); // Riscos de projeto e fiscalização
+        criteria.debug_logic.push('+ Riscos de contratação integrada (projeto, fiscalização especializada)');
+        break;
+      case 'Empreitada integral':
+        criteria.additional_risks.push(...[1, 9, 28, 42]); // Riscos amplos de gestão
+        criteria.debug_logic.push('+ Riscos de empreitada integral (gestão ampla, garantias)');
+        break;
+      case 'Contratação por tarefa':
+        criteria.excluded_risks.push(...[1, 4, 9]); // Exclui riscos de planejamento complexo
+        criteria.debug_logic.push('- Riscos de planejamento complexo (tarefa simples)');
+        break;
+    }
+
+    // 4. MODIFICADORES POR FAIXA DE VALOR
+    switch (projData.valor) {
+      case 'ate-100k':
+        criteria.excluded_risks.push(...[1, 4, 23, 37]); // Obra pequena, menos complexidade
+        criteria.debug_logic.push('- Riscos de alta complexidade (valor baixo)');
+        break;
+      case 'acima-5m':
+        criteria.additional_risks.push(...[1, 4, 9, 23, 37, 46]); // Obra grande, mais riscos
+        criteria.debug_logic.push('+ Riscos de alta complexidade (valor alto)');
+        break;
+    }
+
+    // 5. MODIFICADORES POR PRAZO
+    switch (projData.prazo) {
+      case 'ate-6m':
+        criteria.additional_risks.push(...[10, 12, 19]); // Riscos de cronograma apertado
+        criteria.debug_logic.push('+ Riscos de prazo apertado');
+        break;
+      case 'acima-24m':
+        criteria.additional_risks.push(...[11, 35, 48]); // Riscos de longo prazo
+        criteria.debug_logic.push('+ Riscos de longo prazo (obsolescência, atualizações)');
+        break;
+    }
+
+    // 6. MODIFICADORES POR CARACTERÍSTICAS ESPECIAIS
+    projData.caracteristicas.forEach(caracteristica => {
+      switch (caracteristica) {
+        case 'Obra em unidade em funcionamento':
+          criteria.additional_risks.push(...[25, 38]);
+          criteria.debug_logic.push('+ Riscos de obra em funcionamento');
+          break;
+        case 'Necessita licenciamento ambiental':
+          criteria.additional_risks.push(...[9, 36]);
+          criteria.debug_logic.push('+ Riscos ambientais e de licenciamento');
+          break;
+        case 'Área de segurança máxima':
+          criteria.additional_risks.push(...[10, 12, 13, 15]);
+          criteria.debug_logic.push('+ Riscos de alta segurança');
+          break;
+        case 'Integração com sistemas existentes':
+          criteria.additional_risks.push(...[14, 29, 34, 44]);
+          criteria.debug_logic.push('+ Riscos de integração sistêmica');
+          break;
+        case 'Demolição de estruturas':
+          criteria.additional_risks.push(...[19, 36]);
+          criteria.debug_logic.push('+ Riscos de demolição');
+          break;
+        case 'Instalações especiais (blindagem, etc.)':
+          criteria.additional_risks.push(...[2, 15, 18]);
+          criteria.debug_logic.push('+ Riscos de instalações especializadas');
+          break;
+      }
+    });
+
+    // 7. REMOVER DUPLICATAS
+    criteria.additional_risks = [...new Set(criteria.additional_risks)];
+    criteria.excluded_risks = [...new Set(criteria.excluded_risks)];
+
+    return criteria;
   };
 
   const generateRisks = async () => {
@@ -96,11 +212,13 @@ const RiskMatrixApp = () => {
     setError(null);
 
     try {
-      const tipo_obra_chave = getTipoObraChave(projectData);
+      // Obter critérios avançados
+      const advancedCriteria = getAdvancedRiskCriteria(projectData);
+      setDebugInfo(advancedCriteria); // Para mostrar a lógica ao usuário
       
       const payload = {
         ...projectData,
-        tipo_obra_chave: tipo_obra_chave
+        ...advancedCriteria
       };
 
       const response = await fetch(`${getApiUrl()}/api/project-risks`, {
@@ -160,7 +278,7 @@ const RiskMatrixApp = () => {
       const response = await fetch(`${getApiUrl()}/api/generate-pdf`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectData, selectedRisks }),
+        body: JSON.stringify({ projectData, selectedRisks, debugInfo }),
       });
 
       if (response.ok) {
@@ -179,6 +297,7 @@ const RiskMatrixApp = () => {
     return projectData.forca && 
            projectData.tipoUnidade && 
            projectData.tipoIntervencao && 
+           projectData.regimeExecucao && // Novo campo obrigatório
            projectData.valor && 
            projectData.prazo;
   };
@@ -326,26 +445,22 @@ const RiskMatrixApp = () => {
                           </select>
                         </div>
                       )}
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-3">
-                          Complexidade Técnica: <span className="text-blue-600 font-semibold">{projectData.complexidade}/5</span>
-                        </label>
-                        <div className="px-2">
-                          <input
-                            type="range"
-                            min="1"
-                            max="5"
-                            value={projectData.complexidade}
-                            onChange={(e) => handleInputChange('complexidade', parseInt(e.target.value))}
-                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                          />
-                          <div className="flex justify-between text-xs text-gray-500 mt-2">
-                            <span>Simples</span>
-                            <span>Complexa</span>
-                          </div>
+
+                      {projectData.tipoIntervencao && (
+                        <div className="animate-fadeIn">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Regime de Execução *</label>
+                          <select
+                            value={projectData.regimeExecucao}
+                            onChange={(e) => handleInputChange('regimeExecucao', e.target.value)}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white shadow-sm"
+                          >
+                            <option value="">Selecione o regime de execução</option>
+                            {regimesExecucao.map((regime, index) => (
+                              <option key={index} value={regime}>{regime}</option>
+                            ))}
+                          </select>
                         </div>
-                      </div>
+                      )}
                     </div>
                   </div>
 
@@ -410,13 +525,19 @@ const RiskMatrixApp = () => {
                     </div>
                   </div>
 
-                  {/* Resumo do projeto */}
+                  {/* Resumo do projeto ATUALIZADO */}
                   <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
-                    <h4 className="font-semibold text-blue-900 mb-3">Resumo do Projeto</h4>
+                    <h4 className="font-semibold text-blue-900 mb-3 flex items-center">
+                      <FileText className="w-4 h-4 mr-2" />
+                      Resumo do Projeto
+                    </h4>
                     <div className="space-y-2 text-sm">
                       <p><span className="font-medium">Força:</span> {projectData.forca || 'Não informado'}</p>
                       <p><span className="font-medium">Unidade:</span> {projectData.tipoUnidade || 'Não informado'}</p>
                       <p><span className="font-medium">Intervenção:</span> {projectData.tipoIntervencao || 'Não informado'}</p>
+                      <p><span className="font-medium">Regime:</span> {projectData.regimeExecucao || 'Não informado'}</p>
+                      <p><span className="font-medium">Valor:</span> {projectData.valor || 'Não informado'}</p>
+                      <p><span className="font-medium">Prazo:</span> {projectData.prazo || 'Não informado'}</p>
                       <p><span className="font-medium">Características:</span> {projectData.caracteristicas.length} selecionadas</p>
                     </div>
                   </div>
@@ -449,6 +570,29 @@ const RiskMatrixApp = () => {
         {/* Step 2: Revisão de Riscos */}
         {currentStep === 2 && (
           <div className="space-y-6">
+            {/* Debug Info - Mostrar lógica de seleção */}
+            {debugInfo && (
+              <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
+                <h3 className="font-semibold text-blue-900 mb-3 flex items-center">
+                  <Info className="w-5 h-5 mr-2" />
+                  Lógica de Seleção Aplicada
+                </h3>
+                <div className="space-y-2 text-sm">
+                  <p><span className="font-medium">Tipo de Obra Base:</span> {debugInfo.tipo_obra_chave || 'Não identificado'}</p>
+                  <p><span className="font-medium">Riscos Adicionais:</span> {debugInfo.additional_risks.length} identificados</p>
+                  <p><span className="font-medium">Riscos Excluídos:</span> {debugInfo.excluded_risks.length} removidos</p>
+                  <div className="mt-3">
+                    <span className="font-medium">Critérios Aplicados:</span>
+                    <ul className="mt-1 space-y-1 ml-4">
+                      {debugInfo.debug_logic.map((logic, index) => (
+                        <li key={index} className="text-xs text-gray-600">• {logic}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="bg-white rounded-2xl shadow-xl border border-gray-100">
               <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 border-b">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -605,13 +749,14 @@ const RiskMatrixApp = () => {
                 onClick={() => {
                   setCurrentStep(1);
                   setSelectedRisks([]);
+                  setDebugInfo(null);
                   setProjectData({
                     forca: '',
                     tipoUnidade: '',
                     tipoIntervencao: '',
+                    regimeExecucao: '',
                     valor: '',
                     prazo: '',
-                    complexidade: 3,
                     caracteristicas: []
                   });
                 }}
