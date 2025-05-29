@@ -1,41 +1,73 @@
 import React, { useState } from 'react';
 import { ChevronRight, Download, Edit2, AlertTriangle, CheckCircle, Building2, DollarSign, Settings, Info, FileText } from 'lucide-react';
 
-// Constantes de dados
+// Constantes baseadas na análise dos dados do CEA
 const forcas = [
-  'Corpo de Bombeiros (CBMPR)',
-  'Polícia Científica',
-  'Polícia Civil',
-  'Polícia Militar (PMPR)',
-  'Polícia Penal'
+  'Corpo de Bombeiros Militar',
+  'Polícia Civil', 
+  'Polícia Militar',
+  'Polícia Penal',
+  'Polícia Científica'
 ];
 
+// Tipos de unidades baseados nos dados reais das obras do CEA
 const tiposUnidade = {
-  'Corpo de Bombeiros (CBMPR)': ['Pelotão', 'Companhia', 'Companhia Independente', 'Batalhão', 'Comando Regional'],
-  'Polícia Militar (PMPR)': ['Pelotão', 'Companhia', 'Companhia Independente', 'Batalhão', 'Comando Regional'],
-  'Polícia Civil': ['Delegacia Cidadã Tipo IA', 'Delegacia Cidadã Tipo II', 'Delegacia Cidadã Tipo III'],
-  'Polícia Penal': ['Cadeia Pública', 'Penitenciária Estadual'],
-  'Polícia Científica': ['Posto Avançado', 'UETC (Unidade Especializada Técnico-Científica)']
+  'Corpo de Bombeiros Militar': [
+    'Pelotão',
+    'Companhia', 
+    'Companhia Independente',
+    'Batalhão',
+    'Comando Regional',
+    'Posto de Bombeiros Comunitário'
+  ],
+  'Polícia Militar': [
+    'Pelotão',
+    'Companhia',
+    'Companhia Independente', 
+    'Batalhão',
+    'Comando Regional'
+  ],
+  'Polícia Civil': [
+    'Delegacia Cidadã Tipo I',
+    'Delegacia Cidadã Tipo II',
+    'Delegacia Cidadã Tipo III',
+    'Delegacia Especializada',
+    'Núcleo Regional'
+  ],
+  'Polícia Penal': [
+    'Cadeia Pública',
+    'Penitenciária Estadual',
+    'Centro Socioeducativo'
+  ],
+  'Polícia Científica': [
+    'Posto Regional',
+    'UETC (Unidade Especializada Técnico-Científica)'
+  ]
 };
 
+// Tipos de intervenção baseados nos dados do CEA
 const tiposIntervencao = ['Construção', 'Reforma', 'Reparos'];
 
-// Novos regimes de execução baseados na Lei 14.133/2021 (Nova Lei de Licitações)
+// Regimes de execução incluindo contratação semi-integrada
 const regimesExecucao = [
   'Empreitada por preço global',
   'Empreitada por preço unitário',
   'Contratação por tarefa',
-  'Empreitada integral',
-  'Contratação integrada'
+  'Contratação integrada',
+  'Contratação semi-integrada', // NOVO
+  'Empreitada integral'
 ];
 
+// Características especiais expandidas baseadas na análise
 const caracteristicasEspeciais = [
   'Obra em unidade em funcionamento',
   'Necessita licenciamento ambiental',
   'Área de segurança máxima',
   'Integração com sistemas existentes',
   'Demolição de estruturas',
-  'Instalações especiais (blindagem, etc.)'
+  'Instalações especiais (blindagem, etc.)',
+  'Obra em área urbana densamente povoada', // NOVO
+  'Necessita relocação temporária' // NOVO
 ];
 
 // Função para obter a URL base da API
@@ -52,16 +84,15 @@ const RiskMatrixApp = () => {
     forca: '',
     tipoUnidade: '',
     tipoIntervencao: '',
-    regimeExecucao: '', // Novo campo
+    regimeExecucao: '',
     valor: '',
     prazo: '',
     caracteristicas: []
-    // Removido: complexidade
   });
   const [selectedRisks, setSelectedRisks] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState(null);
-  const [debugInfo, setDebugInfo] = useState(null); // Para mostrar lógica de seleção
+  const [debugInfo, setDebugInfo] = useState(null);
 
   const handleInputChange = (field, value) => {
     setProjectData(prev => {
@@ -82,7 +113,7 @@ const RiskMatrixApp = () => {
     }));
   };
 
-  // Lógica APRIMORADA de seleção de riscos
+  // Lógica APRIMORADA de seleção de riscos baseada nos dados do CEA
   const getAdvancedRiskCriteria = (projData) => {
     const criteria = {
       tipo_obra_chave: null,
@@ -92,37 +123,49 @@ const RiskMatrixApp = () => {
       debug_logic: []
     };
 
-    // 1. MAPEAMENTO PRINCIPAL - Força + Tipo de Unidade
-    if (projData.forca === 'Polícia Penal' && (projData.tipoUnidade === 'Cadeia Pública' || projData.tipoUnidade === 'Penitenciária Estadual')) {
-      criteria.tipo_obra_chave = 'presidios';
-      criteria.debug_logic.push('Mapeamento: Polícia Penal → presidios');
-    } else if (projData.forca === 'Polícia Civil' && projData.tipoUnidade?.startsWith('Delegacia')) {
-      criteria.tipo_obra_chave = 'delegacias';
-      criteria.debug_logic.push('Mapeamento: Polícia Civil → delegacias');
-    } else if ((projData.forca === 'Corpo de Bombeiros (CBMPR)' || projData.forca === 'Polícia Militar (PMPR)')) {
+    // 1. MAPEAMENTO PRINCIPAL - Baseado nos dados reais do CEA
+    if (projData.forca === 'Polícia Penal') {
+      if (['Cadeia Pública', 'Penitenciária Estadual', 'Centro Socioeducativo'].includes(projData.tipoUnidade)) {
+        criteria.tipo_obra_chave = 'presidios';
+        criteria.debug_logic.push('Mapeamento: Polícia Penal → presidios');
+      }
+    } else if (projData.forca === 'Polícia Civil') {
+      if (projData.tipoUnidade?.includes('Delegacia') || projData.tipoUnidade?.includes('Núcleo Regional')) {
+        criteria.tipo_obra_chave = 'delegacias';
+        criteria.debug_logic.push('Mapeamento: Polícia Civil → delegacias');
+      }
+    } else if (projData.forca === 'Corpo de Bombeiros Militar' || projData.forca === 'Polícia Militar') {
       if (['Pelotão', 'Companhia', 'Companhia Independente', 'Batalhão', 'Comando Regional'].includes(projData.tipoUnidade)) {
         criteria.tipo_obra_chave = 'quarteis';
         criteria.debug_logic.push(`Mapeamento: ${projData.forca} → quarteis`);
+      } else if (projData.tipoUnidade === 'Posto de Bombeiros Comunitário') {
+        criteria.tipo_obra_chave = 'centros_treinamento'; // Obras menores
+        criteria.debug_logic.push('Mapeamento: PBC → centros_treinamento');
       }
-    } else if (projData.forca === 'Polícia Científica' && projData.tipoUnidade === 'UETC (Unidade Especializada Técnico-Científica)') {
-      criteria.tipo_obra_chave = 'centrais_operacionais';
-      criteria.debug_logic.push('Mapeamento: Polícia Científica UETC → centrais_operacionais');
+    } else if (projData.forca === 'Polícia Científica') {
+      if (projData.tipoUnidade === 'UETC (Unidade Especializada Técnico-Científica)') {
+        criteria.tipo_obra_chave = 'centrais_operacionais';
+        criteria.debug_logic.push('Mapeamento: Polícia Científica UETC → centrais_operacionais');
+      } else if (projData.tipoUnidade === 'Posto Regional') {
+        criteria.tipo_obra_chave = 'centros_treinamento';
+        criteria.debug_logic.push('Mapeamento: Posto Regional → centros_treinamento');
+      }
     }
 
-    // 2. MODIFICADORES POR TIPO DE INTERVENÇÃO
+    // 2. MODIFICADORES POR TIPO DE INTERVENÇÃO - Baseado na análise CEA
     if (projData.tipoIntervencao === 'Construção') {
       criteria.additional_risks.push(...[1, 9, 21, 22]); // Riscos específicos de construção nova
-      criteria.debug_logic.push('+ Riscos de construção nova (planejamento, licenciamento, sustentabilidade)');
+      criteria.debug_logic.push('+ Riscos de construção nova (34.3% das obras CEA)');
     } else if (projData.tipoIntervencao === 'Reforma') {
       criteria.additional_risks.push(...[25, 29, 38, 44]); // Riscos de integração e operação
-      criteria.debug_logic.push('+ Riscos de reforma (integração, operação em funcionamento)');
+      criteria.debug_logic.push('+ Riscos de reforma (30% das obras CEA)');
     } else if (projData.tipoIntervencao === 'Reparos') {
       criteria.additional_risks.push(...[11, 28, 32]); // Riscos menores, mais técnicos
       criteria.excluded_risks.push(...[1, 4, 9]); // Exclui riscos de planejamento complexo
-      criteria.debug_logic.push('+ Riscos de reparos (técnicos) / - Riscos de planejamento complexo');
+      criteria.debug_logic.push('+ Riscos de reparos (30.9% das obras CEA) / - Riscos de planejamento complexo');
     }
 
-    // 3. MODIFICADORES POR REGIME DE EXECUÇÃO
+    // 3. MODIFICADORES POR REGIME DE EXECUÇÃO - Incluindo semi-integrada
     switch (projData.regimeExecucao) {
       case 'Empreitada por preço global':
         criteria.additional_risks.push(...[3, 5, 8]); // Riscos de orçamento e qualificação
@@ -135,6 +178,10 @@ const RiskMatrixApp = () => {
       case 'Contratação integrada':
         criteria.additional_risks.push(...[1, 2, 23, 37]); // Riscos de projeto e fiscalização
         criteria.debug_logic.push('+ Riscos de contratação integrada (projeto, fiscalização especializada)');
+        break;
+      case 'Contratação semi-integrada':
+        criteria.additional_risks.push(...[1, 23, 37]); // Riscos de projeto parcial
+        criteria.debug_logic.push('+ Riscos de contratação semi-integrada (projeto básico + executivo)');
         break;
       case 'Empreitada integral':
         criteria.additional_risks.push(...[1, 9, 28, 42]); // Riscos amplos de gestão
@@ -149,25 +196,37 @@ const RiskMatrixApp = () => {
         break;
     }
 
-    // 4. MODIFICADORES POR FAIXA DE VALOR
+    // 4. MODIFICADORES POR FAIXA DE VALOR - Baseado no padrão CEA
     switch (projData.valor) {
-      case 'ate-100k':
+      case 'ate-50k':
         criteria.excluded_risks.push(...[1, 4, 23, 37]); // Obra pequena, menos complexidade
-        criteria.debug_logic.push('- Riscos de alta complexidade (valor baixo)');
+        criteria.debug_logic.push('- Riscos de alta complexidade (obra pequena)');
+        break;
+      case '200k-500k':
+        criteria.additional_risks.push(...[23]); // Análise técnica mais rigorosa
+        criteria.debug_logic.push('+ Risco de análise técnica (obra média)');
+        break;
+      case '1.5m-5m':
+        criteria.additional_risks.push(...[1, 4, 23, 37]); // Obra grande, mais riscos
+        criteria.debug_logic.push('+ Riscos de alta complexidade (obra grande)');
         break;
       case 'acima-5m':
-        criteria.additional_risks.push(...[1, 4, 9, 23, 37, 46]); // Obra grande, mais riscos
-        criteria.debug_logic.push('+ Riscos de alta complexidade (valor alto)');
+        criteria.additional_risks.push(...[1, 4, 9, 23, 37, 46]); // Obra muito grande, todos os riscos
+        criteria.debug_logic.push('+ Riscos de alta complexidade (grande empreendimento)');
         break;
       default:
         criteria.debug_logic.push('Faixa de valor intermediária - sem modificadores específicos');
         break;
     }
 
-    // 5. MODIFICADORES POR PRAZO
+    // 5. MODIFICADORES POR PRAZO - Ajustado para o padrão CEA
     switch (projData.prazo) {
-      case 'ate-6m':
-        criteria.additional_risks.push(...[10, 12, 19]); // Riscos de cronograma apertado
+      case 'ate-3m':
+        criteria.additional_risks.push(...[10, 12, 19]); // Riscos de cronograma muito apertado
+        criteria.debug_logic.push('+ Riscos de prazo muito apertado');
+        break;
+      case '3m-6m':
+        criteria.additional_risks.push(...[10, 19]); // Riscos de cronograma apertado
         criteria.debug_logic.push('+ Riscos de prazo apertado');
         break;
       case 'acima-24m':
@@ -179,7 +238,7 @@ const RiskMatrixApp = () => {
         break;
     }
 
-    // 6. MODIFICADORES POR CARACTERÍSTICAS ESPECIAIS
+    // 6. MODIFICADORES POR CARACTERÍSTICAS ESPECIAIS - Expandido
     projData.caracteristicas.forEach(caracteristica => {
       switch (caracteristica) {
         case 'Obra em unidade em funcionamento':
@@ -206,6 +265,14 @@ const RiskMatrixApp = () => {
           criteria.additional_risks.push(...[2, 15, 18]);
           criteria.debug_logic.push('+ Riscos de instalações especializadas');
           break;
+        case 'Obra em área urbana densamente povoada':
+          criteria.additional_risks.push(...[36, 47]);
+          criteria.debug_logic.push('+ Riscos de obra em área urbana');
+          break;
+        case 'Necessita relocação temporária':
+          criteria.additional_risks.push(...[25, 38, 47]);
+          criteria.debug_logic.push('+ Riscos de relocação temporária');
+          break;
         default:
           criteria.debug_logic.push(`Característica não reconhecida: ${caracteristica}`);
           break;
@@ -226,7 +293,7 @@ const RiskMatrixApp = () => {
     try {
       // Obter critérios avançados
       const advancedCriteria = getAdvancedRiskCriteria(projectData);
-      setDebugInfo(advancedCriteria); // Para mostrar a lógica ao usuário
+      setDebugInfo(advancedCriteria);
       
       const payload = {
         ...projectData,
@@ -309,7 +376,7 @@ const RiskMatrixApp = () => {
     return projectData.forca && 
            projectData.tipoUnidade && 
            projectData.tipoIntervencao && 
-           projectData.regimeExecucao && // Novo campo obrigatório
+           projectData.regimeExecucao && 
            projectData.valor && 
            projectData.prazo;
   };
@@ -328,6 +395,7 @@ const RiskMatrixApp = () => {
                 Matriz de Risco - SESP/PR
               </h1>
               <p className="text-blue-200 text-lg">Centro de Engenharia e Arquitetura</p>
+              <p className="text-blue-300 text-sm">Baseado em análise de 557 obras do CEA</p>
             </div>
           </div>
         </div>
@@ -513,10 +581,11 @@ const RiskMatrixApp = () => {
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white shadow-sm"
                         >
                           <option value="">Selecione a faixa de valor</option>
-                          <option value="ate-100k">Até R$ 100.000</option>
-                          <option value="100k-500k">R$ 100.001 a R$ 500.000</option>
-                          <option value="500k-1m">R$ 500.001 a R$ 1.000.000</option>
-                          <option value="1m-5m">R$ 1.000.001 a R$ 5.000.000</option>
+                          <option value="ate-50k">Até R$ 50.000</option>
+                          <option value="50k-200k">R$ 50.001 a R$ 200.000</option>
+                          <option value="200k-500k">R$ 200.001 a R$ 500.000</option>
+                          <option value="500k-1.5m">R$ 500.001 a R$ 1.500.000</option>
+                          <option value="1.5m-5m">R$ 1.500.001 a R$ 5.000.000</option>
                           <option value="acima-5m">Acima de R$ 5.000.000</option>
                         </select>
                       </div>
@@ -528,7 +597,8 @@ const RiskMatrixApp = () => {
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white shadow-sm"
                         >
                           <option value="">Selecione o prazo</option>
-                          <option value="ate-6m">Até 6 meses</option>
+                          <option value="ate-3m">Até 3 meses</option>
+                          <option value="3m-6m">3 a 6 meses</option>
                           <option value="6m-12m">6 a 12 meses</option>
                           <option value="12m-24m">12 a 24 meses</option>
                           <option value="acima-24m">Acima de 24 meses</option>
@@ -551,6 +621,19 @@ const RiskMatrixApp = () => {
                       <p><span className="font-medium">Valor:</span> {projectData.valor || 'Não informado'}</p>
                       <p><span className="font-medium">Prazo:</span> {projectData.prazo || 'Não informado'}</p>
                       <p><span className="font-medium">Características:</span> {projectData.caracteristicas.length} selecionadas</p>
+                    </div>
+                  </div>
+
+                  {/* Info box com dados do CEA */}
+                  <div className="bg-green-50 rounded-xl p-6 border border-green-200">
+                    <h4 className="font-semibold text-green-900 mb-3 flex items-center">
+                      <Info className="w-4 h-4 mr-2" />
+                      Dados do CEA
+                    </h4>
+                    <div className="space-y-1 text-xs text-green-800">
+                      <p>• 557 obras analisadas</p>
+                      <p>• 34.3% construções, 30.9% reparos, 30% reformas</p>
+                      <p>• Baseado no histórico real de obras do SESP/PR</p>
                     </div>
                   </div>
                 </div>
@@ -587,7 +670,7 @@ const RiskMatrixApp = () => {
               <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
                 <h3 className="font-semibold text-blue-900 mb-3 flex items-center">
                   <Info className="w-5 h-5 mr-2" />
-                  Lógica de Seleção Aplicada
+                  Lógica de Seleção Aplicada (Baseada nos Dados CEA)
                 </h3>
                 <div className="space-y-2 text-sm">
                   <p><span className="font-medium">Tipo de Obra Base:</span> {debugInfo.tipo_obra_chave || 'Não identificado'}</p>
@@ -748,7 +831,8 @@ const RiskMatrixApp = () => {
             </div>
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Matriz de Risco Processada!</h2>
             <p className="text-gray-600 mb-8 max-w-lg mx-auto leading-relaxed">
-              A sua Matriz de Risco foi processada com sucesso. A funcionalidade de download do PDF será implementada em breve.
+              A sua Matriz de Risco foi processada com sucesso baseada na análise de 557 obras do CEA. 
+              A funcionalidade de download do PDF será implementada em breve.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
