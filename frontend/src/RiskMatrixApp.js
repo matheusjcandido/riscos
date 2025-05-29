@@ -63,11 +63,10 @@ const caracteristicasEspeciais = [
   'Obra em unidade em funcionamento',
   'Necessita licenciamento ambiental',
   'Área de segurança máxima',
-  'Integração com sistemas existentes',
   'Demolição de estruturas',
   'Instalações especiais (blindagem, etc.)',
-  'Obra em área urbana densamente povoada', // NOVO
-  'Necessita relocação temporária' // NOVO
+  'Obra em área urbana densamente povoada',
+  'Necessita relocação temporária'
 ];
 
 // Função para obter a URL base da API
@@ -86,7 +85,6 @@ const RiskMatrixApp = () => {
     tipoIntervencao: '',
     regimeExecucao: '',
     valor: '',
-    prazo: '',
     caracteristicas: []
   });
   const [selectedRisks, setSelectedRisks] = useState([]);
@@ -219,26 +217,7 @@ const RiskMatrixApp = () => {
         break;
     }
 
-    // 5. MODIFICADORES POR PRAZO - Ajustado para o padrão CEA
-    switch (projData.prazo) {
-      case 'ate-3m':
-        criteria.additional_risks.push(...[10, 12, 19]); // Riscos de cronograma muito apertado
-        criteria.debug_logic.push('+ Riscos de prazo muito apertado');
-        break;
-      case '3m-6m':
-        criteria.additional_risks.push(...[10, 19]); // Riscos de cronograma apertado
-        criteria.debug_logic.push('+ Riscos de prazo apertado');
-        break;
-      case 'acima-24m':
-        criteria.additional_risks.push(...[11, 35, 48]); // Riscos de longo prazo
-        criteria.debug_logic.push('+ Riscos de longo prazo (obsolescência, atualizações)');
-        break;
-      default:
-        criteria.debug_logic.push('Prazo intermediário - sem modificadores específicos');
-        break;
-    }
-
-    // 6. MODIFICADORES POR CARACTERÍSTICAS ESPECIAIS - Expandido
+    // 5. MODIFICADORES POR CARACTERÍSTICAS ESPECIAIS - Expandido
     projData.caracteristicas.forEach(caracteristica => {
       switch (caracteristica) {
         case 'Obra em unidade em funcionamento':
@@ -252,10 +231,6 @@ const RiskMatrixApp = () => {
         case 'Área de segurança máxima':
           criteria.additional_risks.push(...[10, 12, 13, 15]);
           criteria.debug_logic.push('+ Riscos de alta segurança');
-          break;
-        case 'Integração com sistemas existentes':
-          criteria.additional_risks.push(...[14, 29, 34, 44]);
-          criteria.debug_logic.push('+ Riscos de integração sistêmica');
           break;
         case 'Demolição de estruturas':
           criteria.additional_risks.push(...[19, 36]);
@@ -377,8 +352,7 @@ const RiskMatrixApp = () => {
            projectData.tipoUnidade && 
            projectData.tipoIntervencao && 
            projectData.regimeExecucao && 
-           projectData.valor && 
-           projectData.prazo;
+           projectData.valor;
   };
 
   return (
@@ -589,21 +563,6 @@ const RiskMatrixApp = () => {
                           <option value="acima-5m">Acima de R$ 5.000.000</option>
                         </select>
                       </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Prazo de Execução *</label>
-                        <select
-                          value={projectData.prazo}
-                          onChange={(e) => handleInputChange('prazo', e.target.value)}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white shadow-sm"
-                        >
-                          <option value="">Selecione o prazo</option>
-                          <option value="ate-3m">Até 3 meses</option>
-                          <option value="3m-6m">3 a 6 meses</option>
-                          <option value="6m-12m">6 a 12 meses</option>
-                          <option value="12m-24m">12 a 24 meses</option>
-                          <option value="acima-24m">Acima de 24 meses</option>
-                        </select>
-                      </div>
                     </div>
                   </div>
 
@@ -619,7 +578,6 @@ const RiskMatrixApp = () => {
                       <p><span className="font-medium">Intervenção:</span> {projectData.tipoIntervencao || 'Não informado'}</p>
                       <p><span className="font-medium">Regime:</span> {projectData.regimeExecucao || 'Não informado'}</p>
                       <p><span className="font-medium">Valor:</span> {projectData.valor || 'Não informado'}</p>
-                      <p><span className="font-medium">Prazo:</span> {projectData.prazo || 'Não informado'}</p>
                       <p><span className="font-medium">Características:</span> {projectData.caracteristicas.length} selecionadas</p>
                     </div>
                   </div>
@@ -634,6 +592,22 @@ const RiskMatrixApp = () => {
                       <p>• 557 obras analisadas</p>
                       <p>• 34.3% construções, 30.9% reparos, 30% reformas</p>
                       <p>• Baseado no histórico real de obras do SESP/PR</p>
+                    </div>
+                  </div>
+
+                  {/* Explicação da lógica de seleção */}
+                  <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
+                    <h4 className="font-semibold text-blue-900 mb-3 flex items-center">
+                      <Settings className="w-4 h-4 mr-2" />
+                      Como Funciona a Seleção de Riscos
+                    </h4>
+                    <div className="space-y-2 text-xs text-blue-800">
+                      <p><strong>1. Base por Tipo de Obra:</strong> Cada combinação força + unidade define riscos específicos</p>
+                      <p><strong>2. Ajuste por Intervenção:</strong> Construção adiciona riscos de planejamento, reparos reduz complexidade</p>
+                      <p><strong>3. Regime de Execução:</strong> Contratação integrada adiciona riscos de projeto, tarefa simplifica</p>
+                      <p><strong>4. Valor do Projeto:</strong> Obras maiores incluem riscos de alta complexidade</p>
+                      <p><strong>5. Características Especiais:</strong> Cada item selecionado adiciona riscos específicos</p>
+                      <p className="pt-1 border-t border-blue-200"><em>Resultado: Lista personalizada dos riscos mais relevantes para seu projeto</em></p>
                     </div>
                   </div>
                 </div>
@@ -852,7 +826,6 @@ const RiskMatrixApp = () => {
                     tipoIntervencao: '',
                     regimeExecucao: '',
                     valor: '',
-                    prazo: '',
                     caracteristicas: []
                   });
                 }}
