@@ -10,7 +10,7 @@ const forcas = [
   'Polícia Científica'
 ];
 
-// Tipos de unidades baseados nos dados reais das obras do CEA
+// Tipos de unidades ATUALIZADOS baseados no PDF e especificações
 const tiposUnidade = {
   'Corpo de Bombeiros Militar': [
     'Pelotão',
@@ -28,21 +28,96 @@ const tiposUnidade = {
     'Comando Regional'
   ],
   'Polícia Civil': [
-    'Delegacia Cidadã Tipo I',
-    'Delegacia Cidadã Tipo II',
-    'Delegacia Cidadã Tipo III',
+    'Delegacia Cidadã Padrão IA (376,73 m²)',
+    'Delegacia Cidadã Padrão I (642,29 m²)',
+    'Delegacia Cidadã Padrão II (1.207,48 m²)',
+    'Delegacia Cidadã Padrão III (1.791,23 m²)',
     'Delegacia Especializada',
     'Núcleo Regional'
   ],
   'Polícia Penal': [
-    'Cadeia Pública',
-    'Penitenciária Estadual',
-    'Centro Socioeducativo'
+    'Casa de Custódia',
+    'Penitenciária'
   ],
   'Polícia Científica': [
-    'Posto Regional',
-    'UETC (Unidade Especializada Técnico-Científica)'
+    'UETC Básica',
+    'UETC Intermediária', 
+    'Posto Avançado'
   ]
+};
+
+// Mapeamento de tamanhos dos empreendimentos baseado no PDF
+const tamanhosPorUnidade = {
+  // Polícia Civil - baseado no PDF das Delegacias Cidadãs
+  'Delegacia Cidadã Padrão IA (376,73 m²)': {
+    area: 376.73,
+    investimento: 2768965.50,
+    pavimentos: 1,
+    categoria: 'pequeno',
+    lote_minimo: 1400
+  },
+  'Delegacia Cidadã Padrão I (642,29 m²)': {
+    area: 642.29,
+    investimento: 4720831.50,
+    pavimentos: 1,
+    categoria: 'medio',
+    lote_minimo: 1500
+  },
+  'Delegacia Cidadã Padrão II (1.207,48 m²)': {
+    area: 1207.48,
+    investimento: 8874978.00,
+    pavimentos: 2,
+    categoria: 'grande',
+    lote_minimo: 1500
+  },
+  'Delegacia Cidadã Padrão III (1.791,23 m²)': {
+    area: 1791.23,
+    investimento: 13165540.50,
+    pavimentos: 3,
+    categoria: 'muito_grande',
+    lote_minimo: 1500
+  },
+  
+  // Polícia Penal - estimativas baseadas em complexidade
+  'Casa de Custódia': {
+    area: 800,
+    categoria: 'medio',
+    complexidade_seguranca: 'alta'
+  },
+  'Penitenciária': {
+    area: 2500,
+    categoria: 'muito_grande',
+    complexidade_seguranca: 'maxima'
+  },
+  
+  // Polícia Científica - baseado em complexidade técnica
+  'UETC Básica': {
+    area: 300,
+    categoria: 'pequeno',
+    complexidade_tecnica: 'baixa'
+  },
+  'UETC Intermediária': {
+    area: 600,
+    categoria: 'medio',
+    complexidade_tecnica: 'media'
+  },
+  'Posto Avançado': {
+    area: 150,
+    categoria: 'pequeno',
+    complexidade_tecnica: 'baixa'
+  },
+  
+  // Demais forças - estimativas
+  'Pelotão': { area: 400, categoria: 'pequeno' },
+  'Companhia': { area: 800, categoria: 'medio' },
+  'Companhia Independente': { area: 1000, categoria: 'grande' },
+  'Batalhão': { area: 1500, categoria: 'grande' },
+  'Comando Regional': { area: 2000, categoria: 'muito_grande' },
+  'Posto de Bombeiros Comunitário': { area: 200, categoria: 'pequeno' },
+  
+  // Outros
+  'Delegacia Especializada': { area: 500, categoria: 'medio' },
+  'Núcleo Regional': { area: 1200, categoria: 'grande' }
 };
 
 // Tipos de intervenção baseados nos dados do CEA
@@ -54,7 +129,7 @@ const regimesExecucao = [
   'Empreitada por preço unitário',
   'Contratação por tarefa',
   'Contratação integrada',
-  'Contratação semi-integrada', // NOVO
+  'Contratação semi-integrada',
   'Empreitada integral'
 ];
 
@@ -111,113 +186,172 @@ const RiskMatrixApp = () => {
     }));
   };
 
-  // Lógica APRIMORADA de seleção de riscos baseada nos dados do CEA
+  // Função para obter informações do tamanho da unidade
+  const getTamanhoInfo = (tipoUnidade) => {
+    return tamanhosPorUnidade[tipoUnidade] || { categoria: 'medio', area: 0 };
+  };
+
+  // Lógica APRIMORADA de seleção de riscos baseada nos dados do CEA E TAMANHOS
   const getAdvancedRiskCriteria = (projData) => {
     const criteria = {
       tipo_obra_chave: null,
       risk_multipliers: {},
       additional_risks: [],
       excluded_risks: [],
-      debug_logic: []
+      debug_logic: [],
+      tamanho_info: getTamanhoInfo(projData.tipoUnidade)
     };
+
+    // Adicionar informações de tamanho aos critérios
+    const tamanhoInfo = criteria.tamanho_info;
+    criteria.debug_logic.push(`Tamanho identificado: ${tamanhoInfo.categoria} (${tamanhoInfo.area || 'N/A'} m²)`);
 
     // 1. MAPEAMENTO PRINCIPAL - Baseado nos dados reais do CEA
     if (projData.forca === 'Polícia Penal') {
-      if (['Cadeia Pública', 'Penitenciária Estadual', 'Centro Socioeducativo'].includes(projData.tipoUnidade)) {
+      if (['Casa de Custódia', 'Penitenciária'].includes(projData.tipoUnidade)) {
         criteria.tipo_obra_chave = 'presidios';
         criteria.debug_logic.push('Mapeamento: Polícia Penal → presidios');
+        
+        // Riscos específicos baseados no tipo de estabelecimento penal
+        if (projData.tipoUnidade === 'Penitenciária') {
+          criteria.additional_risks.push(...[10, 12, 13, 15, 30, 49]); // Segurança máxima
+          criteria.debug_logic.push('+ Riscos de segurança máxima (Penitenciária)');
+        } else if (projData.tipoUnidade === 'Casa de Custódia') {
+          criteria.additional_risks.push(...[10, 12, 25]); // Segurança alta
+          criteria.debug_logic.push('+ Riscos de segurança alta (Casa de Custódia)');
+        }
       }
     } else if (projData.forca === 'Polícia Civil') {
-      if (projData.tipoUnidade?.includes('Delegacia') || projData.tipoUnidade?.includes('Núcleo Regional')) {
+      if (projData.tipoUnidade?.includes('Delegacia')) {
         criteria.tipo_obra_chave = 'delegacias';
         criteria.debug_logic.push('Mapeamento: Polícia Civil → delegacias');
+        
+        // Riscos específicos baseados no padrão da delegacia
+        if (projData.tipoUnidade.includes('Padrão IA')) {
+          criteria.excluded_risks.push(...[1, 4, 23, 37]); // Obra pequena, menos complexidade
+          criteria.debug_logic.push('- Riscos de alta complexidade (Padrão IA - pequeno)');
+        } else if (projData.tipoUnidade.includes('Padrão I') && !projData.tipoUnidade.includes('IA')) {
+          criteria.debug_logic.push('Padrão I - complexidade média');
+        } else if (projData.tipoUnidade.includes('Padrão II')) {
+          criteria.additional_risks.push(...[23, 37]); // Mais pavimentos, mais complexidade
+          criteria.debug_logic.push('+ Riscos de múltiplos pavimentos (Padrão II)');
+        } else if (projData.tipoUnidade.includes('Padrão III')) {
+          criteria.additional_risks.push(...[1, 4, 23, 37, 46]); // Obra grande, todos os riscos
+          criteria.debug_logic.push('+ Riscos de alta complexidade (Padrão III - 3 pavimentos)');
+        }
+      } else if (projData.tipoUnidade?.includes('Núcleo Regional')) {
+        criteria.tipo_obra_chave = 'centrais_operacionais';
+        criteria.debug_logic.push('Mapeamento: Núcleo Regional → centrais operacionais');
       }
     } else if (projData.forca === 'Corpo de Bombeiros Militar' || projData.forca === 'Polícia Militar') {
       if (['Pelotão', 'Companhia', 'Companhia Independente', 'Batalhão', 'Comando Regional'].includes(projData.tipoUnidade)) {
         criteria.tipo_obra_chave = 'quarteis';
         criteria.debug_logic.push(`Mapeamento: ${projData.forca} → quarteis`);
       } else if (projData.tipoUnidade === 'Posto de Bombeiros Comunitário') {
-        criteria.tipo_obra_chave = 'centros_treinamento'; // Obras menores
-        criteria.debug_logic.push('Mapeamento: PBC → centros_treinamento');
+        criteria.tipo_obra_chave = 'centros_treinamento';
+        criteria.excluded_risks.push(...[1, 4, 9]); // Obra pequena
+        criteria.debug_logic.push('Mapeamento: PBC → centros_treinamento (reduzida complexidade)');
       }
     } else if (projData.forca === 'Polícia Científica') {
-      if (projData.tipoUnidade === 'UETC (Unidade Especializada Técnico-Científica)') {
-        criteria.tipo_obra_chave = 'centrais_operacionais';
-        criteria.debug_logic.push('Mapeamento: Polícia Científica UETC → centrais_operacionais');
-      } else if (projData.tipoUnidade === 'Posto Regional') {
+      if (projData.tipoUnidade === 'UETC Básica') {
         criteria.tipo_obra_chave = 'centros_treinamento';
-        criteria.debug_logic.push('Mapeamento: Posto Regional → centros_treinamento');
+        criteria.excluded_risks.push(...[1, 4]); // Menos complexidade
+        criteria.debug_logic.push('Mapeamento: UETC Básica → centros_treinamento (baixa complexidade)');
+      } else if (projData.tipoUnidade === 'UETC Intermediária') {
+        criteria.tipo_obra_chave = 'centrais_operacionais';
+        criteria.additional_risks.push(...[2, 14, 63]); // Sistemas especializados
+        criteria.debug_logic.push('Mapeamento: UETC Intermediária → centrais (sistemas especializados)');
+      } else if (projData.tipoUnidade === 'Posto Avançado') {
+        criteria.tipo_obra_chave = 'centros_treinamento';
+        criteria.excluded_risks.push(...[1, 4, 9, 23]); // Obra muito pequena
+        criteria.debug_logic.push('Mapeamento: Posto Avançado → centros (obra pequena)');
       }
     }
 
-    // 2. MODIFICADORES POR TIPO DE INTERVENÇÃO - Baseado na análise CEA
+    // 2. MODIFICADORES POR CATEGORIA DE TAMANHO
+    switch (tamanhoInfo.categoria) {
+      case 'pequeno':
+        criteria.excluded_risks.push(...[1, 4, 23, 37, 46]); // Reduz complexidade
+        criteria.debug_logic.push('- Riscos de alta complexidade (empreendimento pequeno)');
+        break;
+      case 'medio':
+        criteria.additional_risks.push(...[37]); // Fiscalização adequada
+        criteria.debug_logic.push('+ Riscos de fiscalização (empreendimento médio)');
+        break;
+      case 'grande':
+        criteria.additional_risks.push(...[1, 23, 37]); // Mais complexidade
+        criteria.debug_logic.push('+ Riscos de complexidade (empreendimento grande)');
+        break;
+      case 'muito_grande':
+        criteria.additional_risks.push(...[1, 4, 9, 23, 37, 46, 78, 79]); // Todos os riscos
+        criteria.debug_logic.push('+ Riscos de alta complexidade (grande empreendimento)');
+        break;
+    }
+
+    // 3. MODIFICADORES ESPECÍFICOS BASEADOS NO INVESTIMENTO (para Delegacias)
+    if (tamanhoInfo.investimento) {
+      if (tamanhoInfo.investimento > 10000000) { // Acima de 10 milhões
+        criteria.additional_risks.push(...[56, 73]); // Riscos financeiros
+        criteria.debug_logic.push('+ Riscos financeiros (alto investimento)');
+      }
+    }
+
+    // 4. MODIFICADORES POR COMPLEXIDADE ESPECIAL
+    if (tamanhoInfo.complexidade_seguranca === 'maxima') {
+      criteria.additional_risks.push(...[10, 12, 13, 15, 30, 49, 70, 71]);
+      criteria.debug_logic.push('+ Riscos de segurança máxima');
+    } else if (tamanhoInfo.complexidade_seguranca === 'alta') {
+      criteria.additional_risks.push(...[10, 12, 25, 38]);
+      criteria.debug_logic.push('+ Riscos de alta segurança');
+    }
+
+    if (tamanhoInfo.complexidade_tecnica === 'media') {
+      criteria.additional_risks.push(...[2, 14, 18]);
+      criteria.debug_logic.push('+ Riscos de sistemas técnicos');
+    }
+
+    // 5. MODIFICADORES POR TIPO DE INTERVENÇÃO
     if (projData.tipoIntervencao === 'Construção') {
-      criteria.additional_risks.push(...[1, 9, 21, 22]); // Riscos específicos de construção nova
+      criteria.additional_risks.push(...[1, 9, 21, 22]);
       criteria.debug_logic.push('+ Riscos de construção nova (34.3% das obras CEA)');
     } else if (projData.tipoIntervencao === 'Reforma') {
-      criteria.additional_risks.push(...[25, 29, 38, 44]); // Riscos de integração e operação
+      criteria.additional_risks.push(...[25, 29, 38, 44]);
       criteria.debug_logic.push('+ Riscos de reforma (30% das obras CEA)');
     } else if (projData.tipoIntervencao === 'Reparos') {
-      criteria.additional_risks.push(...[11, 28, 32]); // Riscos menores, mais técnicos
-      criteria.excluded_risks.push(...[1, 4, 9]); // Exclui riscos de planejamento complexo
+      criteria.additional_risks.push(...[11, 28, 32]);
+      criteria.excluded_risks.push(...[1, 4, 9]);
       criteria.debug_logic.push('+ Riscos de reparos (30.9% das obras CEA) / - Riscos de planejamento complexo');
     }
 
-    // 3. MODIFICADORES POR REGIME DE EXECUÇÃO - Incluindo semi-integrada
+    // 6. MODIFICADORES POR REGIME DE EXECUÇÃO
     switch (projData.regimeExecucao) {
       case 'Empreitada por preço global':
-        criteria.additional_risks.push(...[3, 5, 8]); // Riscos de orçamento e qualificação
+        criteria.additional_risks.push(...[3, 5, 8]);
         criteria.debug_logic.push('+ Riscos de preço global (orçamento, qualificação)');
         break;
       case 'Empreitada por preço unitário':
-        criteria.additional_risks.push(...[20, 40]); // Riscos de medição e comissionamento
+        criteria.additional_risks.push(...[20, 40]);
         criteria.debug_logic.push('+ Riscos de preço unitário (medição, comissionamento)');
         break;
       case 'Contratação integrada':
-        criteria.additional_risks.push(...[1, 2, 23, 37]); // Riscos de projeto e fiscalização
+        criteria.additional_risks.push(...[1, 2, 23, 37]);
         criteria.debug_logic.push('+ Riscos de contratação integrada (projeto, fiscalização especializada)');
         break;
       case 'Contratação semi-integrada':
-        criteria.additional_risks.push(...[1, 23, 37]); // Riscos de projeto parcial
+        criteria.additional_risks.push(...[1, 23, 37]);
         criteria.debug_logic.push('+ Riscos de contratação semi-integrada (projeto básico + executivo)');
         break;
       case 'Empreitada integral':
-        criteria.additional_risks.push(...[1, 9, 28, 42]); // Riscos amplos de gestão
+        criteria.additional_risks.push(...[1, 9, 28, 42]);
         criteria.debug_logic.push('+ Riscos de empreitada integral (gestão ampla, garantias)');
         break;
       case 'Contratação por tarefa':
-        criteria.excluded_risks.push(...[1, 4, 9]); // Exclui riscos de planejamento complexo
+        criteria.excluded_risks.push(...[1, 4, 9]);
         criteria.debug_logic.push('- Riscos de planejamento complexo (tarefa simples)');
         break;
-      default:
-        criteria.debug_logic.push('Regime de execução não reconhecido ou não informado');
-        break;
     }
 
-    // 4. MODIFICADORES POR FAIXA DE VALOR - Baseado no padrão CEA
-    switch (projData.valor) {
-      case 'ate-50k':
-        criteria.excluded_risks.push(...[1, 4, 23, 37]); // Obra pequena, menos complexidade
-        criteria.debug_logic.push('- Riscos de alta complexidade (obra pequena)');
-        break;
-      case '200k-500k':
-        criteria.additional_risks.push(...[23]); // Análise técnica mais rigorosa
-        criteria.debug_logic.push('+ Risco de análise técnica (obra média)');
-        break;
-      case '1.5m-5m':
-        criteria.additional_risks.push(...[1, 4, 23, 37]); // Obra grande, mais riscos
-        criteria.debug_logic.push('+ Riscos de alta complexidade (obra grande)');
-        break;
-      case 'acima-5m':
-        criteria.additional_risks.push(...[1, 4, 9, 23, 37, 46]); // Obra muito grande, todos os riscos
-        criteria.debug_logic.push('+ Riscos de alta complexidade (grande empreendimento)');
-        break;
-      default:
-        criteria.debug_logic.push('Faixa de valor intermediária - sem modificadores específicos');
-        break;
-    }
-
-    // 5. MODIFICADORES POR CARACTERÍSTICAS ESPECIAIS - Expandido
+    // 7. MODIFICADORES POR CARACTERÍSTICAS ESPECIAIS
     projData.caracteristicas.forEach(caracteristica => {
       switch (caracteristica) {
         case 'Obra em unidade em funcionamento':
@@ -248,13 +382,10 @@ const RiskMatrixApp = () => {
           criteria.additional_risks.push(...[25, 38, 47]);
           criteria.debug_logic.push('+ Riscos de relocação temporária');
           break;
-        default:
-          criteria.debug_logic.push(`Característica não reconhecida: ${caracteristica}`);
-          break;
       }
     });
 
-    // 7. REMOVER DUPLICATAS
+    // 8. REMOVER DUPLICATAS
     criteria.additional_risks = [...new Set(criteria.additional_risks)];
     criteria.excluded_risks = [...new Set(criteria.excluded_risks)];
 
@@ -353,6 +484,23 @@ const RiskMatrixApp = () => {
            projectData.tipoIntervencao && 
            projectData.regimeExecucao && 
            projectData.valor;
+  };
+
+  // Função para obter informações detalhadas da unidade selecionada
+  const getUnidadeInfo = () => {
+    if (!projectData.tipoUnidade) return null;
+    const info = getTamanhoInfo(projectData.tipoUnidade);
+    return info;
+  };
+
+  // Função para formatar valores monetários
+  const formatCurrency = (value) => {
+    if (!value) return 'N/A';
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+      minimumFractionDigits: 2
+    }).format(value);
   };
 
   return (
@@ -483,6 +631,127 @@ const RiskMatrixApp = () => {
                           </select>
                         </div>
                       )}
+
+                      {/* Informações detalhadas da unidade selecionada */}
+                      {projectData.tipoUnidade && getUnidadeInfo() && (
+                        <div className="animate-fadeIn bg-blue-50 rounded-lg p-4 border border-blue-200">
+                          <h4 className="font-semibold text-blue-900 mb-2 flex items-center">
+                            <Info className="w-4 h-4 mr-2" />
+                            Especificações da Unidade
+                          </h4>
+                          <div className="grid grid-cols-2 gap-2 text-sm">
+                            {getUnidadeInfo().area && (
+                              <p><span className="font-medium">Área:</span> {getUnidadeInfo().area} m²</p>
+                            )}
+                            {getUnidadeInfo().pavimentos && (
+                              <p><span className="font-medium">Pavimentos:</span> {getUnidadeInfo().pavimentos}</p>
+                            )}
+                            {getUnidadeInfo().investimento && (
+                              <p className="col-span-2"><span className="font-medium">Investimento:</span> {formatCurrency(getUnidadeInfo().investimento)}</p>
+                            )}
+                            <p className="col-span-2"><span className="font-medium">Porte:</span> {getUnidadeInfo().categoria.replace('_', ' ')}</p>
+                            {getUnidadeInfo().lote_minimo && (
+                              <p className="col-span-2"><span className="font-medium">Lote mínimo:</span> {getUnidadeInfo().lote_minimo} m²</p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Resumo dos padrões de delegacias quando Polícia Civil for selecionada */}
+                      {projectData.forca === 'Polícia Civil' && !projectData.tipoUnidade && (
+                        <div className="animate-fadeIn bg-green-50 rounded-lg p-4 border border-green-200">
+                          <h4 className="font-semibold text-green-900 mb-3 flex items-center">
+                            <Building2 className="w-4 h-4 mr-2" />
+                            Padrões de Delegacias Cidadãs
+                          </h4>
+                          <div className="space-y-2 text-xs">
+                            <div className="grid grid-cols-4 gap-2 font-medium text-green-800 pb-1 border-b border-green-200">
+                              <span>Padrão</span>
+                              <span>Área</span>
+                              <span>Pavimentos</span>
+                              <span>Investimento</span>
+                            </div>
+                            <div className="grid grid-cols-4 gap-2 text-green-700">
+                              <span>IA</span>
+                              <span>377 m²</span>
+                              <span>1</span>
+                              <span>R$ 2,8M</span>
+                            </div>
+                            <div className="grid grid-cols-4 gap-2 text-green-700">
+                              <span>I</span>
+                              <span>642 m²</span>
+                              <span>1</span>
+                              <span>R$ 4,7M</span>
+                            </div>
+                            <div className="grid grid-cols-4 gap-2 text-green-700">
+                              <span>II</span>
+                              <span>1.207 m²</span>
+                              <span>2</span>
+                              <span>R$ 8,9M</span>
+                            </div>
+                            <div className="grid grid-cols-4 gap-2 text-green-700">
+                              <span>III</span>
+                              <span>1.791 m²</span>
+                              <span>3</span>
+                              <span>R$ 13,2M</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Informações sobre Polícia Penal */}
+                      {projectData.forca === 'Polícia Penal' && !projectData.tipoUnidade && (
+                        <div className="animate-fadeIn bg-orange-50 rounded-lg p-4 border border-orange-200">
+                          <h4 className="font-semibold text-orange-900 mb-3 flex items-center">
+                            <Settings className="w-4 h-4 mr-2" />
+                            Tipos de Estabelecimentos Penais
+                          </h4>
+                          <div className="space-y-2 text-sm text-orange-800">
+                            <div className="border-b border-orange-200 pb-2">
+                              <p className="font-medium">Casa de Custódia</p>
+                              <p className="text-xs">• Estabelecimento para custodiados provisórios</p>
+                              <p className="text-xs">• Nível de segurança: Alto</p>
+                              <p className="text-xs">• Porte estimado: Médio (~800 m²)</p>
+                            </div>
+                            <div>
+                              <p className="font-medium">Penitenciária</p>
+                              <p className="text-xs">• Estabelecimento para cumprimento de pena</p>
+                              <p className="text-xs">• Nível de segurança: Máximo</p>
+                              <p className="text-xs">• Porte estimado: Muito Grande (~2.500 m²)</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Informações sobre Polícia Científica */}
+                      {projectData.forca === 'Polícia Científica' && !projectData.tipoUnidade && (
+                        <div className="animate-fadeIn bg-purple-50 rounded-lg p-4 border border-purple-200">
+                          <h4 className="font-semibold text-purple-900 mb-3 flex items-center">
+                            <Settings className="w-4 h-4 mr-2" />
+                            Tipos de Unidades Técnico-Científicas
+                          </h4>
+                          <div className="space-y-2 text-sm text-purple-800">
+                            <div className="border-b border-purple-200 pb-2">
+                              <p className="font-medium">UETC Básica</p>
+                              <p className="text-xs">• Unidade básica para perícias essenciais</p>
+                              <p className="text-xs">• Complexidade técnica: Baixa</p>
+                              <p className="text-xs">• Porte estimado: Pequeno (~300 m²)</p>
+                            </div>
+                            <div className="border-b border-purple-200 pb-2">
+                              <p className="font-medium">UETC Intermediária</p>
+                              <p className="text-xs">• Unidade com laboratórios especializados</p>
+                              <p className="text-xs">• Complexidade técnica: Média</p>
+                              <p className="text-xs">• Porte estimado: Médio (~600 m²)</p>
+                            </div>
+                            <div>
+                              <p className="font-medium">Posto Avançado</p>
+                              <p className="text-xs">• Unidade para atendimento local</p>
+                              <p className="text-xs">• Complexidade técnica: Baixa</p>
+                              <p className="text-xs">• Porte estimado: Pequeno (~150 m²)</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                       
                       {projectData.tipoUnidade && (
                         <div className="animate-fadeIn">
@@ -579,6 +848,9 @@ const RiskMatrixApp = () => {
                       <p><span className="font-medium">Regime:</span> {projectData.regimeExecucao || 'Não informado'}</p>
                       <p><span className="font-medium">Valor:</span> {projectData.valor || 'Não informado'}</p>
                       <p><span className="font-medium">Características:</span> {projectData.caracteristicas.length} selecionadas</p>
+                      {getUnidadeInfo() && (
+                        <p><span className="font-medium">Porte:</span> {getUnidadeInfo().categoria.replace('_', ' ')}</p>
+                      )}
                     </div>
                   </div>
 
@@ -589,13 +861,16 @@ const RiskMatrixApp = () => {
                       Dados do CEA
                     </h4>
                     <div className="space-y-1 text-xs text-green-800">
-                      <p>• 557 obras analisadas</p>
-                      <p>• 34.3% construções, 30.9% reparos, 30% reformas</p>
-                      <p>• Baseado no histórico real de obras do SESP/PR</p>
+                      <p>• 557 obras analisadas do histórico CEA</p>
+                      <p>• Padrões de Delegacias Cidadãs (IA, I, II, III)</p>
+                      <p>• Polícia Penal: Casa de Custódia e Penitenciária</p>
+                      <p>• Polícia Científica: UETC Básica, Intermediária, Posto Avançado</p>
+                      <p>• Riscos ajustados por porte (pequeno a muito grande)</p>
+                      <p>• Baseado em investimentos de R$ 2,8M a R$ 13,2M</p>
                     </div>
                   </div>
 
-                  {/* Explicação da lógica de seleção */}
+                  {/* Explicação da lógica de seleção ATUALIZADA */}
                   <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
                     <h4 className="font-semibold text-blue-900 mb-3 flex items-center">
                       <Settings className="w-4 h-4 mr-2" />
@@ -603,11 +878,12 @@ const RiskMatrixApp = () => {
                     </h4>
                     <div className="space-y-2 text-xs text-blue-800">
                       <p><strong>1. Base por Tipo de Obra:</strong> Cada combinação força + unidade define riscos específicos</p>
-                      <p><strong>2. Ajuste por Intervenção:</strong> Construção adiciona riscos de planejamento, reparos reduz complexidade</p>
-                      <p><strong>3. Regime de Execução:</strong> Contratação integrada adiciona riscos de projeto, tarefa simplifica</p>
-                      <p><strong>4. Valor do Projeto:</strong> Obras maiores incluem riscos de alta complexidade</p>
-                      <p><strong>5. Características Especiais:</strong> Cada item selecionado adiciona riscos específicos</p>
-                      <p className="pt-1 border-t border-blue-200"><em>Resultado: Lista personalizada dos riscos mais relevantes para seu projeto</em></p>
+                      <p><strong>2. Ajuste por Porte:</strong> Pequeno reduz complexidade, grande adiciona mais riscos</p>
+                      <p><strong>3. Padrões Específicos:</strong> Delegacias seguem padrões IA, I, II, III do documento oficial</p>
+                      <p><strong>4. Ajuste por Intervenção:</strong> Construção adiciona riscos de planejamento, reparos reduz complexidade</p>
+                      <p><strong>5. Regime de Execução:</strong> Contratação integrada adiciona riscos de projeto, tarefa simplifica</p>
+                      <p><strong>6. Características Especiais:</strong> Cada item selecionado adiciona riscos específicos</p>
+                      <p className="pt-1 border-t border-blue-200"><em>Resultado: Lista personalizada considerando o porte e complexidade do empreendimento</em></p>
                     </div>
                   </div>
                 </div>
@@ -639,15 +915,19 @@ const RiskMatrixApp = () => {
         {/* Step 2: Revisão de Riscos */}
         {currentStep === 2 && (
           <div className="space-y-6">
-            {/* Debug Info - Mostrar lógica de seleção */}
+            {/* Debug Info - Mostrar lógica de seleção ATUALIZADA */}
             {debugInfo && (
               <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
                 <h3 className="font-semibold text-blue-900 mb-3 flex items-center">
                   <Info className="w-5 h-5 mr-2" />
-                  Lógica de Seleção Aplicada (Baseada nos Dados CEA)
+                  Lógica de Seleção Aplicada (Baseada nos Dados CEA + Porte)
                 </h3>
                 <div className="space-y-2 text-sm">
                   <p><span className="font-medium">Tipo de Obra Base:</span> {debugInfo.tipo_obra_chave || 'Não identificado'}</p>
+                  <p><span className="font-medium">Porte do Empreendimento:</span> {debugInfo.tamanho_info?.categoria?.replace('_', ' ') || 'Não definido'}</p>
+                  {debugInfo.tamanho_info?.area && (
+                    <p><span className="font-medium">Área:</span> {debugInfo.tamanho_info.area} m²</p>
+                  )}
                   <p><span className="font-medium">Riscos Adicionais:</span> {debugInfo.additional_risks.length} identificados</p>
                   <p><span className="font-medium">Riscos Excluídos:</span> {debugInfo.excluded_risks.length} removidos</p>
                   <div className="mt-3">
@@ -671,6 +951,12 @@ const RiskMatrixApp = () => {
                       <span className="font-semibold text-blue-600">{selectedRisks.length}</span> riscos selecionados para: 
                       <span className="font-medium"> {projectData.tipoIntervencao} de {projectData.tipoUnidade} - {projectData.forca}</span>
                     </p>
+                    {debugInfo?.tamanho_info && (
+                      <p className="text-sm text-gray-500 mt-1">
+                        Porte: {debugInfo.tamanho_info.categoria.replace('_', ' ')} 
+                        {debugInfo.tamanho_info.area && ` (${debugInfo.tamanho_info.area} m²)`}
+                      </p>
+                    )}
                   </div>
                   <button
                     onClick={generatePDF}
@@ -805,8 +1091,8 @@ const RiskMatrixApp = () => {
             </div>
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Matriz de Risco Processada!</h2>
             <p className="text-gray-600 mb-8 max-w-lg mx-auto leading-relaxed">
-              A sua Matriz de Risco foi processada com sucesso baseada na análise de 557 obras do CEA. 
-              A funcionalidade de download do PDF será implementada em breve.
+              A sua Matriz de Risco foi processada com sucesso baseada na análise de 557 obras do CEA, 
+              considerando o porte e especificidades do empreendimento. A funcionalidade de download do PDF será implementada em breve.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
