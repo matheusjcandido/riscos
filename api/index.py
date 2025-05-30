@@ -91,37 +91,29 @@ TAMANHOS_POR_UNIDADE = {
         'complexidade': 'muito_alta'
     },
     
-    # Polícia Científica - baseado em complexidade técnica
+    # Polícia Científica - sem informações de tamanho específicas
     'UETC Básica': {
-        'area': 300,
         'categoria': 'pequeno',
         'complexidade_tecnica': 'baixa',
         'complexidade': 'media'
     },
     'UETC Intermediária': {
-        'area': 600,
         'categoria': 'medio',
         'complexidade_tecnica': 'media',
         'complexidade': 'alta'
     },
     'Posto Avançado': {
-        'area': 150,
         'categoria': 'pequeno',
         'complexidade_tecnica': 'baixa',
         'complexidade': 'baixa'
     },
     
-    # Demais forças - estimativas
+    # CBMPR e PMPR
     'Pelotão': {'area': 400, 'categoria': 'pequeno', 'complexidade': 'baixa'},
     'Companhia': {'area': 800, 'categoria': 'medio', 'complexidade': 'media'},
     'Companhia Independente': {'area': 1000, 'categoria': 'grande', 'complexidade': 'alta'},
     'Batalhão': {'area': 1500, 'categoria': 'grande', 'complexidade': 'alta'},
-    'Comando Regional': {'area': 2000, 'categoria': 'muito_grande', 'complexidade': 'muito_alta'},
-    'Posto de Bombeiros Comunitário': {'area': 200, 'categoria': 'pequeno', 'complexidade': 'baixa'},
-    
-    # Outros
-    'Delegacia Especializada': {'area': 500, 'categoria': 'medio', 'complexidade': 'media'},
-    'Núcleo Regional': {'area': 1200, 'categoria': 'grande', 'complexidade': 'alta'}
+    'Comando Regional': {'area': 300, 'categoria': 'pequeno', 'complexidade': 'baixa'}  # Corrigido: pequeno (estrutura administrativa)
 }
 
 def obter_tamanho_info(tipo_unidade):
@@ -134,18 +126,13 @@ def mapear_tipo_obra(forca, tipo_unidade):
         if tipo_unidade in ['Casa de Custódia', 'Penitenciária']:
             return 'presidios'
     elif forca == 'Polícia Civil':
-        if 'Delegacia' in tipo_unidade or 'Núcleo Regional' in tipo_unidade:
-            if 'Núcleo Regional' in tipo_unidade:
-                return 'centrais_operacionais'
-            else:
-                return 'delegacias'
+        if 'Delegacia' in tipo_unidade:
+            return 'delegacias'
     elif forca in ['Corpo de Bombeiros Militar', 'Polícia Militar']:
-        if tipo_unidade == 'Posto de Bombeiros Comunitário':
-            return 'centros_treinamento'
-        else:
+        if tipo_unidade in ['Pelotão', 'Companhia', 'Companhia Independente', 'Batalhão', 'Comando Regional']:
             return 'quarteis'
     elif forca == 'Polícia Científica':
-        if tipo_unidade == 'UETC Básica' or tipo_unidade == 'Posto Avançado':
+        if tipo_unidade in ['UETC Básica', 'Posto Avançado']:
             return 'centros_treinamento'
         elif tipo_unidade == 'UETC Intermediária':
             return 'centrais_operacionais'
@@ -238,6 +225,11 @@ def ajustar_riscos_por_especialidade(riscos_ids, tipo_unidade, tamanho_info, deb
         # 3 pavimentos - alta complexidade
         riscos_ids.update([1, 4, 23, 37, 46, 62, 77])
         debug_logic.append("+ Alta complexidade (Padrão III - 3 pavimentos)")
+    
+    # CBMPR e PMPR - Comando Regional (só estrutura administrativa)
+    elif tipo_unidade == 'Comando Regional':
+        riscos_ids.difference_update([1, 4, 9, 23])  # Reduzir complexidade significativamente
+        debug_logic.append("- Complexidade reduzida (Comando Regional - estrutura administrativa)")
     
     # Polícia Científica - riscos técnicos
     elif tipo_unidade == 'UETC Intermediária':
@@ -382,9 +374,12 @@ def processar_criterios_cea(project_data):
         elif caracteristica == 'Demolição de estruturas':
             riscos_selecionados_ids.update([19, 36, 66, 75])
             debug_logic.append('+ Riscos de demolição')
-        elif caracteristica == 'Instalações especiais (blindagem, etc.)':
-            riscos_selecionados_ids.update([2, 15, 18, 63, 71])
-            debug_logic.append('+ Riscos de instalações especiais')
+        elif caracteristica == 'Obra em área urbana densamente povoada':
+            riscos_selecionados_ids.update([36, 47])
+            debug_logic.append('+ Riscos de obra em área urbana')
+        elif caracteristica == 'Necessita relocação temporária':
+            riscos_selecionados_ids.update([25, 38, 47])
+            debug_logic.append('+ Riscos de relocação temporária')
     
     # 7. Adicionar riscos adicionais do frontend
     riscos_selecionados_ids.update(additional_risks)
@@ -452,7 +447,7 @@ def health_check():
     return jsonify({
         "status": "ok", 
         "message": "API de Riscos da SESP/PR CEA está operacional!",
-        "version": "3.1-CEA-DELEGACIAS",
+        "version": "3.2-CEA-DELEGACIAS-CORRIGIDA",
         "features": [
             "advanced_risk_selection", 
             "debug_info", 
@@ -461,7 +456,9 @@ def health_check():
             "size_based_risk_adjustment",
             "delegacia_patterns_pdf",
             "penal_security_levels",
-            "scientific_police_types"
+            "scientific_police_types",
+            "cbmpr_pmpr_units",
+            "comando_regional_pequeno"
         ],
         "cea_data": {
             "total_obras_analisadas": 557,
@@ -787,10 +784,11 @@ def get_statistics():
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5001))
-    print("=== INICIANDO API COM PADRÕES DE DELEGACIAS + TAMANHOS ===")
+    print("=== INICIANDO API COM PADRÕES DE DELEGACIAS + TAMANHOS (CORRIGIDA) ===")
     print("Base de dados: 557 obras analisadas")
     print("Padrões de Delegacias: IA, I, II, III")
     print("Polícia Penal: Casa de Custódia, Penitenciária") 
     print("Polícia Científica: UETC Básica, Intermediária, Posto Avançado")
-    print("Versão: 3.1-CEA-DELEGACIAS")
+    print("CBMPR/PMPR: Pelotão, Companhia, Batalhão, Comando Regional (pequeno)")
+    print("Versão: 3.2-CEA-DELEGACIAS-CORRIGIDA")
     app.run(host='0.0.0.0', port=port, debug=True)
