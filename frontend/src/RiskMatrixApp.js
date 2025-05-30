@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronRight, Download, Edit2, AlertTriangle, CheckCircle, Building2, DollarSign, Settings, Info, FileText } from 'lucide-react';
+import { ChevronRight, Download, Edit2, AlertTriangle, CheckCircle, Building2, DollarSign, Settings, Info, FileText, Database, Plus, ArrowLeft, Send, Eye } from 'lucide-react';
 
 // Constantes baseadas na análise dos dados do CEA
 const forcas = [
@@ -142,6 +142,7 @@ const getApiUrl = () => {
 
 const RiskMatrixApp = () => {
   const [currentStep, setCurrentStep] = useState(1);
+  const [currentPage, setCurrentPage] = useState('form'); // 'form', 'all-risks', 'suggest'
   const [projectData, setProjectData] = useState({
     forca: '',
     tipoUnidade: '',
@@ -151,9 +152,27 @@ const RiskMatrixApp = () => {
     caracteristicas: []
   });
   const [selectedRisks, setSelectedRisks] = useState([]);
+  const [allRisks, setAllRisks] = useState(null);
+  const [allRisksStats, setAllRisksStats] = useState(null);
+  const [selectedRiskForSuggestion, setSelectedRiskForSuggestion] = useState(null);
+  const [suggestionForm, setSuggestionForm] = useState({
+    tipo_sugestao: '',
+    nome_sugerinte: '',
+    email_sugerinte: '',
+    risco_id: '',
+    descricao_alteracao: '',
+    novo_evento: '',
+    nova_descricao: '',
+    nova_mitigacao: '',
+    nova_correcao: '',
+    justificativa: ''
+  });
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isLoadingAllRisks, setIsLoadingAllRisks] = useState(false);
+  const [isSendingSuggestion, setIsSendingSuggestion] = useState(false);
   const [error, setError] = useState(null);
   const [debugInfo, setDebugInfo] = useState(null);
+  const [suggestionSuccess, setSuggestionSuccess] = useState(null);
 
   const handleInputChange = (field, value) => {
     setProjectData(prev => {
@@ -511,7 +530,114 @@ const RiskMatrixApp = () => {
            projectData.valor;
   };
 
-  // Função para obter informações detalhadas da unidade selecionada
+  // Função para carregar todos os riscos da base de dados
+  const loadAllRisks = async () => {
+    setIsLoadingAllRisks(true);
+    setError(null);
+    
+    try {
+      const response = await fetch(`${getApiUrl()}/api/all-risks`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erro da API: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.error) {
+        setError(`Erro do servidor: ${data.error}`);
+      } else {
+        setAllRisks(data.riscos_por_fase);
+        setAllRisksStats(data.estatisticas);
+        setCurrentPage('all-risks');
+      }
+    } catch (error) {
+      console.error('Erro ao carregar todos os riscos:', error);
+      setError('Falha ao comunicar com o servidor. Tente novamente.');
+    } finally {
+      setIsLoadingAllRisks(false);
+    }
+  };
+
+  // Função para enviar sugestão
+  const sendSuggestion = async () => {
+    setIsSendingSuggestion(true);
+    setError(null);
+    
+    try {
+      const response = await fetch(`${getApiUrl()}/api/suggest-risk`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(suggestionForm),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erro da API: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.error) {
+        setError(`Erro do servidor: ${data.error}`);
+      } else {
+        setSuggestionSuccess(data);
+        // Limpar formulário
+        setSuggestionForm({
+          tipo_sugestao: '',
+          nome_sugerinte: '',
+          email_sugerinte: '',
+          risco_id: '',
+          descricao_alteracao: '',
+          novo_evento: '',
+          nova_descricao: '',
+          nova_mitigacao: '',
+          nova_correcao: '',
+          justificativa: ''
+        });
+        setSelectedRiskForSuggestion(null);
+      }
+    } catch (error) {
+      console.error('Erro ao enviar sugestão:', error);
+      setError('Falha ao enviar sugestão. Tente novamente.');
+    } finally {
+      setIsSendingSuggestion(false);
+    }
+  };
+
+  // Função para abrir formulário de sugestão para um risco específico
+  const openSuggestionForm = (risco = null) => {
+    if (risco) {
+      setSelectedRiskForSuggestion(risco);
+      setSuggestionForm(prev => ({
+        ...prev,
+        tipo_sugestao: 'alteracao',
+        risco_id: risco.id.toString()
+      }));
+    } else {
+      setSelectedRiskForSuggestion(null);
+      setSuggestionForm(prev => ({
+        ...prev,
+        tipo_sugestao: 'novo_risco',
+        risco_id: ''
+      }));
+    }
+    setCurrentPage('suggest');
+  };
+
+  // Função para voltar à página inicial
+  const goToHome = () => {
+    setCurrentPage('form');
+    setCurrentStep(1);
+    setError(null);
+    setSuggestionSuccess(null);
+  };
   const getUnidadeInfo = () => {
     if (!projectData.tipoUnidade) return null;
     const info = getTamanhoInfo(projectData.tipoUnidade);
@@ -594,10 +720,16 @@ const RiskMatrixApp = () => {
               <div className="p-2 bg-red-100 rounded-lg mr-3">
                 <AlertTriangle className="w-5 h-5 text-red-600" />
               </div>
-              <div>
+              <div className="flex-1">
                 <h3 className="font-medium text-red-800">Erro encontrado</h3>
                 <p className="text-red-700 text-sm">{error}</p>
               </div>
+              <button 
+                onClick={() => setError(null)}
+                className="text-red-400 hover:text-red-600 ml-2"
+              >
+                ×
+              </button>
             </div>
           </div>
         )}
@@ -961,6 +1093,9 @@ const RiskMatrixApp = () => {
                       <p>• Polícia Científica: UETC Básica, Intermediária, Posto Avançado</p>
                       <p>• CBMPR e PMPR: Pelotão, Companhia, Batalhão, Comando Regional</p>
                       <p>• Riscos ajustados por porte (pequeno a muito grande)</p>
+                      <p className="pt-1 border-t border-green-200">
+                        <strong>💡 Dica:</strong> Use "Ver Todos os Riscos" no topo para explorar a base completa
+                      </p>
                     </div>
                   </div>
 
@@ -977,6 +1112,25 @@ const RiskMatrixApp = () => {
                       <p><strong>4. Regime de Execução:</strong> Contratação integrada adiciona riscos de projeto, tarefa simplifica</p>
                       <p><strong>5. Características Especiais:</strong> Cada item selecionado adiciona riscos específicos</p>
                       <p className="pt-1 border-t border-blue-200"><em>Resultado: Lista personalizada considerando o porte e complexidade do empreendimento</em></p>
+                    </div>
+                  </div>
+
+                  {/* Seção sobre contribuições */}
+                  <div className="bg-green-50 rounded-xl p-6 border border-green-200">
+                    <h4 className="font-semibold text-green-900 mb-3 flex items-center">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Contribua com a Base de Dados
+                    </h4>
+                    <div className="space-y-2 text-xs text-green-800">
+                      <p>Nossa base de riscos é constantemente atualizada com a contribuição de especialistas.</p>
+                      <p><strong>Você pode:</strong></p>
+                      <p>• Visualizar todos os riscos cadastrados na base de dados</p>
+                      <p>• Sugerir alterações em riscos existentes</p>
+                      <p>• Propor novos riscos baseados em sua experiência</p>
+                      <p>• Melhorar descrições, mitigações e correções</p>
+                      <p className="pt-1 border-t border-green-200">
+                        <em>Suas sugestões são analisadas pela equipe técnica do CEA em até 15 dias úteis</em>
+                      </p>
                     </div>
                   </div>
                 </div>
