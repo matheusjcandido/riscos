@@ -7,13 +7,19 @@ from flask import Flask, jsonify, request, send_file
 from flask_cors import CORS
 
 # Importações para geração de PDF
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.colors import HexColor, black, white
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
-from reportlab.lib.units import mm, inch
-from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_JUSTIFY
-from reportlab.pdfgen import canvas
+try:
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.colors import HexColor, black, white
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
+    from reportlab.lib.units import mm, inch
+    from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_JUSTIFY
+    from reportlab.pdfgen import canvas
+    REPORTLAB_AVAILABLE = True
+    print("ReportLab carregado com sucesso!")
+except ImportError as e:
+    print(f"ERRO: ReportLab não está instalado ou há problema na importação: {e}")
+    REPORTLAB_AVAILABLE = False
 
 app = Flask(__name__)
 CORS(app)
