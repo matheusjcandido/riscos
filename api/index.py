@@ -164,6 +164,9 @@ def obter_texto_nivel_risco(nivel_risco, classificacao=None):
 def gerar_pdf_riscos(dados_projeto, riscos_selecionados, metadados_selecao):
     """Gera o PDF com a matriz de riscos."""
     
+    if not REPORTLAB_AVAILABLE:
+        raise Exception("ReportLab não está instalado. Instale com: pip install reportlab")
+    
     # Criar buffer para o PDF
     buffer = BytesIO()
     
@@ -807,6 +810,65 @@ def get_project_risks():
             "details": str(e)
         }), 500
 
+@app.route('/api/generate-pdf', methods=['POST'])
+def generate_pdf_endpoint():
+    """
+    Endpoint para geração de PDF real com os riscos identificados.
+    """
+    try:
+        dados_para_pdf = request.get_json()
+        
+        if not dados_para_pdf:
+            return jsonify({"error": "Nenhum dado recebido para geração do PDF."}), 400
+        
+        # Extrair dados
+        project_data = dados_para_pdf.get("projectData", {})
+        selected_risks = dados_para_pdf.get("selectedRisks", [])
+        debug_info = dados_para_pdf.get("debugInfo", {})
+        
+        # Validar dados essenciais
+        if not selected_risks:
+            return jsonify({"error": "Nenhum risco foi selecionado para o PDF."}), 400
+        
+        if not project_data.get('forca') or not project_data.get('tipoUnidade'):
+            return jsonify({"error": "Informações do projeto incompletas."}), 400
+        
+        # Log para debug
+        print("=== GERANDO PDF REAL ===")
+        print(f"Projeto: {project_data.get('forca')} - {project_data.get('tipoUnidade')}")
+        print(f"Riscos: {len(selected_risks)}")
+        
+        # Gerar o PDF
+        pdf_buffer = gerar_pdf_riscos(project_data, selected_risks, debug_info)
+        
+        # Criar nome do arquivo
+        forca_abrev = {
+            'Corpo de Bombeiros Militar': 'CBMPR',
+            'Polícia Militar': 'PMPR',
+            'Polícia Civil': 'PCPR', 
+            'Polícia Penal': 'DEPPEN',
+            'Polícia Científica': 'PCP'
+        }.get(project_data.get('forca', ''), 'SESP')
+        
+        tipo_unidade = project_data.get('tipoUnidade', 'Unidade').replace(' ', '_').replace('(', '').replace(')', '').replace(',', '')
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"Matriz_Risco_{forca_abrev}_{tipo_unidade}_{timestamp}.pdf"
+        
+        # Retornar o arquivo PDF
+        return send_file(
+            pdf_buffer,
+            as_attachment=True,
+            download_name=filename,
+            mimetype='application/pdf'
+        )
+        
+    except Exception as e:
+        print(f"Erro ao gerar PDF: {str(e)}")
+        return jsonify({
+            "error": "Erro interno ao gerar PDF.",
+            "details": str(e)
+        }), 500
+
 @app.route('/api/cea-insights', methods=['GET'])
 def get_cea_insights():
     """
@@ -985,63 +1047,6 @@ def suggest_risk():
         print(f"Erro ao processar sugestão: {e}")
         return jsonify({
             "error": "Erro interno ao processar sugestão.",
-            "details": str(e)
-        }), 500
-def generate_pdf_endpoint():
-    """
-    Endpoint para geração de PDF real com os riscos identificados.
-    """
-    try:
-        dados_para_pdf = request.get_json()
-        
-        if not dados_para_pdf:
-            return jsonify({"error": "Nenhum dado recebido para geração do PDF."}), 400
-        
-        # Extrair dados
-        project_data = dados_para_pdf.get("projectData", {})
-        selected_risks = dados_para_pdf.get("selectedRisks", [])
-        debug_info = dados_para_pdf.get("debugInfo", {})
-        
-        # Validar dados essenciais
-        if not selected_risks:
-            return jsonify({"error": "Nenhum risco foi selecionado para o PDF."}), 400
-        
-        if not project_data.get('forca') or not project_data.get('tipoUnidade'):
-            return jsonify({"error": "Informações do projeto incompletas."}), 400
-        
-        # Log para debug
-        print("=== GERANDO PDF REAL ===")
-        print(f"Projeto: {project_data.get('forca')} - {project_data.get('tipoUnidade')}")
-        print(f"Riscos: {len(selected_risks)}")
-        
-        # Gerar o PDF
-        pdf_buffer = gerar_pdf_riscos(project_data, selected_risks, debug_info)
-        
-        # Criar nome do arquivo
-        forca_abrev = {
-            'Corpo de Bombeiros Militar': 'CBMPR',
-            'Polícia Militar': 'PMPR',
-            'Polícia Civil': 'PCPR', 
-            'Polícia Penal': 'DEPPEN',
-            'Polícia Científica': 'PCP'
-        }.get(project_data.get('forca', ''), 'SESP')
-        
-        tipo_unidade = project_data.get('tipoUnidade', 'Unidade').replace(' ', '_').replace('(', '').replace(')', '').replace(',', '')
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        filename = f"Matriz_Risco_{forca_abrev}_{tipo_unidade}_{timestamp}.pdf"
-        
-        # Retornar o arquivo PDF
-        return send_file(
-            pdf_buffer,
-            as_attachment=True,
-            download_name=filename,
-            mimetype='application/pdf'
-        )
-        
-    except Exception as e:
-        print(f"Erro ao gerar PDF: {str(e)}")
-        return jsonify({
-            "error": "Erro interno ao gerar PDF.",
             "details": str(e)
         }), 500
 
