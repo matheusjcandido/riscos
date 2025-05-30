@@ -17,8 +17,7 @@ const tiposUnidade = {
     'Companhia', 
     'Companhia Independente',
     'Batalhão',
-    'Comando Regional',
-    'Posto de Bombeiros Comunitário'
+    'Comando Regional'
   ],
   'Polícia Militar': [
     'Pelotão',
@@ -31,9 +30,7 @@ const tiposUnidade = {
     'Delegacia Cidadã Padrão IA (376,73 m²)',
     'Delegacia Cidadã Padrão I (642,29 m²)',
     'Delegacia Cidadã Padrão II (1.207,48 m²)',
-    'Delegacia Cidadã Padrão III (1.791,23 m²)',
-    'Delegacia Especializada',
-    'Núcleo Regional'
+    'Delegacia Cidadã Padrão III (1.791,23 m²)'
   ],
   'Polícia Penal': [
     'Casa de Custódia',
@@ -90,34 +87,26 @@ const tamanhosPorUnidade = {
     complexidade_seguranca: 'maxima'
   },
   
-  // Polícia Científica - baseado em complexidade técnica
+  // Polícia Científica - sem informações de tamanho específicas
   'UETC Básica': {
-    area: 300,
     categoria: 'pequeno',
     complexidade_tecnica: 'baixa'
   },
   'UETC Intermediária': {
-    area: 600,
     categoria: 'medio',
     complexidade_tecnica: 'media'
   },
   'Posto Avançado': {
-    area: 150,
     categoria: 'pequeno',
     complexidade_tecnica: 'baixa'
   },
   
-  // Demais forças - estimativas
+  // CBMPR e PMPR
   'Pelotão': { area: 400, categoria: 'pequeno' },
   'Companhia': { area: 800, categoria: 'medio' },
   'Companhia Independente': { area: 1000, categoria: 'grande' },
   'Batalhão': { area: 1500, categoria: 'grande' },
-  'Comando Regional': { area: 2000, categoria: 'muito_grande' },
-  'Posto de Bombeiros Comunitário': { area: 200, categoria: 'pequeno' },
-  
-  // Outros
-  'Delegacia Especializada': { area: 500, categoria: 'medio' },
-  'Núcleo Regional': { area: 1200, categoria: 'grande' }
+  'Comando Regional': { area: 300, categoria: 'pequeno' } // Corrigido: pequeno (só estrutura administrativa)
 };
 
 // Tipos de intervenção baseados nos dados do CEA
@@ -133,15 +122,14 @@ const regimesExecucao = [
   'Empreitada integral'
 ];
 
-// Características especiais expandidas baseadas na análise
+// Características especiais organizadas por ordem alfabética
 const caracteristicasEspeciais = [
-  'Obra em unidade em funcionamento',
-  'Necessita licenciamento ambiental',
   'Área de segurança máxima',
   'Demolição de estruturas',
-  'Instalações especiais (blindagem, etc.)',
+  'Necessita licenciamento ambiental',
+  'Necessita relocação temporária',
   'Obra em área urbana densamente povoada',
-  'Necessita relocação temporária'
+  'Obra em unidade em funcionamento'
 ];
 
 // Função para obter a URL base da API
@@ -239,18 +227,17 @@ const RiskMatrixApp = () => {
           criteria.additional_risks.push(...[1, 4, 23, 37, 46]); // Obra grande, todos os riscos
           criteria.debug_logic.push('+ Riscos de alta complexidade (Padrão III - 3 pavimentos)');
         }
-      } else if (projData.tipoUnidade?.includes('Núcleo Regional')) {
-        criteria.tipo_obra_chave = 'centrais_operacionais';
-        criteria.debug_logic.push('Mapeamento: Núcleo Regional → centrais operacionais');
       }
     } else if (projData.forca === 'Corpo de Bombeiros Militar' || projData.forca === 'Polícia Militar') {
       if (['Pelotão', 'Companhia', 'Companhia Independente', 'Batalhão', 'Comando Regional'].includes(projData.tipoUnidade)) {
         criteria.tipo_obra_chave = 'quarteis';
         criteria.debug_logic.push(`Mapeamento: ${projData.forca} → quarteis`);
-      } else if (projData.tipoUnidade === 'Posto de Bombeiros Comunitário') {
-        criteria.tipo_obra_chave = 'centros_treinamento';
-        criteria.excluded_risks.push(...[1, 4, 9]); // Obra pequena
-        criteria.debug_logic.push('Mapeamento: PBC → centros_treinamento (reduzida complexidade)');
+        
+        // Comando Regional é pequeno (só estrutura administrativa)
+        if (projData.tipoUnidade === 'Comando Regional') {
+          criteria.excluded_risks.push(...[1, 4, 9]); // Reduzir complexidade
+          criteria.debug_logic.push('- Complexidade reduzida (Comando Regional - estrutura administrativa)');
+        }
       }
     } else if (projData.forca === 'Polícia Científica') {
       if (projData.tipoUnidade === 'UETC Básica') {
@@ -723,7 +710,79 @@ const RiskMatrixApp = () => {
                         </div>
                       )}
 
-                      {/* Informações sobre Polícia Científica */}
+                      {/* Informações sobre CBMPR */}
+                      {projectData.forca === 'Corpo de Bombeiros Militar' && !projectData.tipoUnidade && (
+                        <div className="animate-fadeIn bg-red-50 rounded-lg p-4 border border-red-200">
+                          <h4 className="font-semibold text-red-900 mb-3 flex items-center">
+                            <Building2 className="w-4 h-4 mr-2" />
+                            Unidades do Corpo de Bombeiros Militar
+                          </h4>
+                          <div className="space-y-2 text-sm text-red-800">
+                            <div className="border-b border-red-200 pb-2">
+                              <p className="font-medium">Pelotão</p>
+                              <p className="text-xs">• Unidade básica operacional</p>
+                              <p className="text-xs">• Porte: Pequeno</p>
+                            </div>
+                            <div className="border-b border-red-200 pb-2">
+                              <p className="font-medium">Companhia</p>
+                              <p className="text-xs">• Unidade operacional intermediária</p>
+                              <p className="text-xs">• Porte: Médio</p>
+                            </div>
+                            <div className="border-b border-red-200 pb-2">
+                              <p className="font-medium">Companhia Independente</p>
+                              <p className="text-xs">• Unidade especializada autônoma</p>
+                              <p className="text-xs">• Porte: Grande</p>
+                            </div>
+                            <div className="border-b border-red-200 pb-2">
+                              <p className="font-medium">Batalhão</p>
+                              <p className="text-xs">• Unidade de grande porte operacional</p>
+                              <p className="text-xs">• Porte: Grande</p>
+                            </div>
+                            <div>
+                              <p className="font-medium">Comando Regional</p>
+                              <p className="text-xs">• Estrutura administrativa regional</p>
+                              <p className="text-xs">• Porte: Pequeno (administrativa)</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Informações sobre PMPR */}
+                      {projectData.forca === 'Polícia Militar' && !projectData.tipoUnidade && (
+                        <div className="animate-fadeIn bg-yellow-50 rounded-lg p-4 border border-yellow-200">
+                          <h4 className="font-semibold text-yellow-900 mb-3 flex items-center">
+                            <Building2 className="w-4 h-4 mr-2" />
+                            Unidades da Polícia Militar
+                          </h4>
+                          <div className="space-y-2 text-sm text-yellow-800">
+                            <div className="border-b border-yellow-200 pb-2">
+                              <p className="font-medium">Pelotão</p>
+                              <p className="text-xs">• Unidade básica de policiamento</p>
+                              <p className="text-xs">• Porte: Pequeno</p>
+                            </div>
+                            <div className="border-b border-yellow-200 pb-2">
+                              <p className="font-medium">Companhia</p>
+                              <p className="text-xs">• Unidade intermediária de policiamento</p>
+                              <p className="text-xs">• Porte: Médio</p>
+                            </div>
+                            <div className="border-b border-yellow-200 pb-2">
+                              <p className="font-medium">Companhia Independente</p>
+                              <p className="text-xs">• Unidade especializada (ROTAM, BOPE, etc.)</p>
+                              <p className="text-xs">• Porte: Grande</p>
+                            </div>
+                            <div className="border-b border-yellow-200 pb-2">
+                              <p className="font-medium">Batalhão</p>
+                              <p className="text-xs">• Grande unidade operacional</p>
+                              <p className="text-xs">• Porte: Grande</p>
+                            </div>
+                            <div>
+                              <p className="font-medium">Comando Regional</p>
+                              <p className="text-xs">• Estrutura administrativa regional</p>
+                              <p className="text-xs">• Porte: Pequeno (administrativa)</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                       {projectData.forca === 'Polícia Científica' && !projectData.tipoUnidade && (
                         <div className="animate-fadeIn bg-purple-50 rounded-lg p-4 border border-purple-200">
                           <h4 className="font-semibold text-purple-900 mb-3 flex items-center">
@@ -735,19 +794,16 @@ const RiskMatrixApp = () => {
                               <p className="font-medium">UETC Básica</p>
                               <p className="text-xs">• Unidade básica para perícias essenciais</p>
                               <p className="text-xs">• Complexidade técnica: Baixa</p>
-                              <p className="text-xs">• Porte estimado: Pequeno (~300 m²)</p>
                             </div>
                             <div className="border-b border-purple-200 pb-2">
                               <p className="font-medium">UETC Intermediária</p>
                               <p className="text-xs">• Unidade com laboratórios especializados</p>
                               <p className="text-xs">• Complexidade técnica: Média</p>
-                              <p className="text-xs">• Porte estimado: Médio (~600 m²)</p>
                             </div>
                             <div>
                               <p className="font-medium">Posto Avançado</p>
                               <p className="text-xs">• Unidade para atendimento local</p>
                               <p className="text-xs">• Complexidade técnica: Baixa</p>
-                              <p className="text-xs">• Porte estimado: Pequeno (~150 m²)</p>
                             </div>
                           </div>
                         </div>
@@ -865,8 +921,8 @@ const RiskMatrixApp = () => {
                       <p>• Padrões de Delegacias Cidadãs (IA, I, II, III)</p>
                       <p>• Polícia Penal: Casa de Custódia e Penitenciária</p>
                       <p>• Polícia Científica: UETC Básica, Intermediária, Posto Avançado</p>
+                      <p>• CBMPR e PMPR: Pelotão, Companhia, Batalhão, Comando Regional</p>
                       <p>• Riscos ajustados por porte (pequeno a muito grande)</p>
-                      <p>• Baseado em investimentos de R$ 2,8M a R$ 13,2M</p>
                     </div>
                   </div>
 
@@ -879,10 +935,9 @@ const RiskMatrixApp = () => {
                     <div className="space-y-2 text-xs text-blue-800">
                       <p><strong>1. Base por Tipo de Obra:</strong> Cada combinação força + unidade define riscos específicos</p>
                       <p><strong>2. Ajuste por Porte:</strong> Pequeno reduz complexidade, grande adiciona mais riscos</p>
-                      <p><strong>3. Padrões Específicos:</strong> Delegacias seguem padrões IA, I, II, III do documento oficial</p>
-                      <p><strong>4. Ajuste por Intervenção:</strong> Construção adiciona riscos de planejamento, reparos reduz complexidade</p>
-                      <p><strong>5. Regime de Execução:</strong> Contratação integrada adiciona riscos de projeto, tarefa simplifica</p>
-                      <p><strong>6. Características Especiais:</strong> Cada item selecionado adiciona riscos específicos</p>
+                      <p><strong>3. Ajuste por Intervenção:</strong> Construção adiciona riscos de planejamento, reparos reduz complexidade</p>
+                      <p><strong>4. Regime de Execução:</strong> Contratação integrada adiciona riscos de projeto, tarefa simplifica</p>
+                      <p><strong>5. Características Especiais:</strong> Cada item selecionado adiciona riscos específicos</p>
                       <p className="pt-1 border-t border-blue-200"><em>Resultado: Lista personalizada considerando o porte e complexidade do empreendimento</em></p>
                     </div>
                   </div>
