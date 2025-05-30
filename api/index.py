@@ -1,8 +1,19 @@
-# api/index.py - Backend melhorado com padrões das Delegacias Cidadãs e consideração de tamanhos
+# api/index.py - Backend melhorado com padrões das Delegacias Cidadãs e geração de PDF
 import os
 import json
-from flask import Flask, jsonify, request
+from datetime import datetime
+from io import BytesIO
+from flask import Flask, jsonify, request, send_file
 from flask_cors import CORS
+
+# Importações para geração de PDF
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.colors import HexColor, black, white
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
+from reportlab.lib.units import mm, inch
+from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_JUSTIFY
+from reportlab.pdfgen import canvas
 
 app = Flask(__name__)
 CORS(app)
@@ -119,6 +130,274 @@ TAMANHOS_POR_UNIDADE = {
 def obter_tamanho_info(tipo_unidade):
     """Obtém informações de tamanho e complexidade da unidade."""
     return TAMANHOS_POR_UNIDADE.get(tipo_unidade, {'categoria': 'medio', 'area': 0, 'complexidade': 'media'})
+
+def obter_cor_risco(nivel_risco):
+    """Retorna a cor correspondente ao nível de risco."""
+    if nivel_risco >= 15:
+        return HexColor('#fef2f2'), HexColor('#dc2626')  # bg-red-50, text-red-600
+    elif nivel_risco >= 8:
+        return HexColor('#fff7ed'), HexColor('#ea580c')  # bg-orange-50, text-orange-600
+    elif nivel_risco >= 3:
+        return HexColor('#fefce8'), HexColor('#ca8a04')  # bg-yellow-50, text-yellow-600
+    else:
+        return HexColor('#eff6ff'), HexColor('#2563eb')  # bg-blue-50, text-blue-600
+
+def obter_texto_nivel_risco(nivel_risco, classificacao=None):
+    """Retorna o texto do nível de risco."""
+    if classificacao:
+        return f"{classificacao} ({nivel_risco})"
+    if nivel_risco >= 15:
+        return f"Extremo ({nivel_risco})"
+    elif nivel_risco >= 8:
+        return f"Alto ({nivel_risco})"
+    elif nivel_risco >= 3:
+        return f"Moderado ({nivel_risco})"
+    else:
+        return f"Baixo ({nivel_risco})"
+
+def gerar_pdf_riscos(dados_projeto, riscos_selecionados, metadados_selecao):
+    """Gera o PDF com a matriz de riscos."""
+    
+    # Criar buffer para o PDF
+    buffer = BytesIO()
+    
+    # Configurar o documento
+    doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=20*mm, leftMargin=20*mm, 
+                           topMargin=25*mm, bottomMargin=25*mm)
+    
+    # Estilos
+    styles = getSampleStyleSheet()
+    
+    # Estilos personalizados
+    titulo_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=18,
+        spaceAfter=12,
+        textColor=HexColor('#1e3a8a'),
+        alignment=TA_CENTER,
+        fontName='Helvetica-Bold'
+    )
+    
+    subtitulo_style = ParagraphStyle(
+        'CustomSubtitle', 
+        parent=styles['Heading2'],
+        fontSize=14,
+        spaceAfter=10,
+        textColor=HexColor('#374151'),
+        alignment=TA_CENTER
+    )
+    
+    info_style = ParagraphStyle(
+        'InfoStyle',
+        parent=styles['Normal'],
+        fontSize=10,
+        spaceAfter=6,
+        textColor=HexColor('#6b7280'),
+        alignment=TA_CENTER
+    )
+    
+    risco_titulo_style = ParagraphStyle(
+        'RiscoTitulo',
+        parent=styles['Heading3'],
+        fontSize=12,
+        spaceAfter=6,
+        textColor=black,
+        fontName='Helvetica-Bold'
+    )
+    
+    risco_texto_style = ParagraphStyle(
+        'RiscoTexto',
+        parent=styles['Normal'],
+        fontSize=9,
+        spaceAfter=4,
+        alignment=TA_JUSTIFY,
+        leading=11
+    )
+    
+    # Conteúdo do documento
+    story = []
+    
+    # Cabeçalho
+    story.append(Paragraph("MATRIZ DE RISCO - SESP/PR", titulo_style))
+    story.append(Paragraph("Centro de Engenharia e Arquitetura", subtitulo_style))
+    story.append(Spacer(1, 10*mm))
+    
+    # Informações do projeto
+    projeto_info = [
+        f"<b>Força:</b> {dados_projeto.get('forca', 'N/A')}",
+        f"<b>Tipo de Unidade:</b> {dados_projeto.get('tipoUnidade', 'N/A')}",
+        f"<b>Tipo de Intervenção:</b> {dados_projeto.get('tipoIntervencao', 'N/A')}",
+        f"<b>Regime de Execução:</b> {dados_projeto.get('regimeExecucao', 'N/A')}",
+        f"<b>Valor Estimado:</b> {dados_projeto.get('valor', 'N/A')}",
+    ]
+    
+    # Adicionar informações de porte se disponível
+    tamanho_info = metadados_selecao.get('tamanho_info', {})
+    if tamanho_info.get('area'):
+        projeto_info.append(f"<b>Área:</b> {tamanho_info['area']} m²")
+    if tamanho_info.get('categoria'):
+        projeto_info.append(f"<b>Porte:</b> {tamanho_info['categoria'].replace('_', ' ').title()}")
+    
+    for info in projeto_info:
+        story.append(Paragraph(info, info_style))
+    
+    story.append(Spacer(1, 8*mm))
+    
+    # Resumo dos riscos
+    total_riscos = len(riscos_selecionados)
+    distribuicao = metadados_selecao.get('risk_distribution', {})
+    
+    resumo_texto = f"""
+    <b>Resumo da Análise:</b><br/>
+    • Total de riscos identificados: {total_riscos}<br/>
+    • Riscos Extremos: {distribuicao.get('extremo', 0)}<br/>
+    • Riscos Altos: {distribuicao.get('alto', 0)}<br/>
+    • Riscos Moderados: {distribuicao.get('moderado', 0)}<br/>
+    • Riscos Baixos: {distribuicao.get('baixo', 0)}<br/>
+    • Base de dados: 557 obras analisadas pelo CEA-SESP/PR
+    """
+    
+    story.append(Paragraph(resumo_texto, info_style))
+    story.append(Spacer(1, 10*mm))
+    
+    # Legenda dos níveis de risco
+    legenda_data = [
+        ['Nível de Risco', 'Pontuação', 'Descrição'],
+        ['Extremo', '15-25', 'Impacto máximo nos objetivos, sem possibilidade de recuperação'],
+        ['Alto', '8-14', 'Impacto significativo, com possibilidade mínima de recuperação'],
+        ['Moderado', '3-7', 'Impacto moderado, com plena possibilidade de recuperação'],
+        ['Baixo', '1-2', 'Impacto mínimo nos objetivos']
+    ]
+    
+    legenda_table = Table(legenda_data, colWidths=[30*mm, 20*mm, 120*mm])
+    legenda_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), HexColor('#f3f4f6')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), black),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), white),
+        ('GRID', (0, 0), (-1, -1), 1, black)
+    ]))
+    
+    story.append(Paragraph("<b>Legenda dos Níveis de Risco:</b>", risco_titulo_style))
+    story.append(legenda_table)
+    story.append(Spacer(1, 8*mm))
+    
+    # Lista de riscos
+    story.append(Paragraph("<b>RISCOS IDENTIFICADOS</b>", titulo_style))
+    story.append(Spacer(1, 6*mm))
+    
+    for i, risco in enumerate(riscos_selecionados):
+        if i > 0:
+            story.append(Spacer(1, 6*mm))
+        
+        # Cabeçalho do risco
+        bg_color, text_color = obter_cor_risco(risco.get('nivel_risco', 0))
+        nivel_texto = obter_texto_nivel_risco(risco.get('nivel_risco', 0), risco.get('classificacao'))
+        
+        # Informações do cabeçalho
+        cabecalho_data = [[
+            f"#{risco.get('id', 'N/A')}",
+            nivel_texto,
+            risco.get('fase', 'N/A'),
+            risco.get('responsavel', 'N/A')
+        ]]
+        
+        cabecalho_table = Table(cabecalho_data, colWidths=[20*mm, 40*mm, 60*mm, 50*mm])
+        cabecalho_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, -1), bg_color),
+            ('TEXTCOLOR', (0, 0), (-1, -1), text_color),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('GRID', (0, 0), (-1, -1), 1, text_color)
+        ]))
+        
+        story.append(cabecalho_table)
+        
+        # Título do evento
+        story.append(Spacer(1, 3*mm))
+        story.append(Paragraph(f"<b>{risco.get('evento', 'N/A')}</b>", risco_titulo_style))
+        
+        # Descrição
+        story.append(Paragraph(f"<b>Descrição:</b> {risco.get('descricao', 'N/A')}", risco_texto_style))
+        
+        # Impacto
+        if risco.get('impacto'):
+            story.append(Paragraph(f"<b>Impacto:</b> {risco.get('impacto')}", risco_texto_style))
+        
+        # Mitigação e Correção em tabela
+        mitigacao_data = [
+            ['🛡️ Mitigação', '🔧 Correção'],
+            [risco.get('mitigacao', 'N/A'), risco.get('correcao', 'N/A')]
+        ]
+        
+        mitigacao_table = Table(mitigacao_data, colWidths=[85*mm, 85*mm])
+        mitigacao_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), HexColor('#f9fafb')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), black),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('LEFTPADDING', (0, 0), (-1, -1), 6),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+            ('GRID', (0, 0), (-1, -1), 1, HexColor('#e5e7eb'))
+        ]))
+        
+        story.append(Spacer(1, 3*mm))
+        story.append(mitigacao_table)
+        
+        # Probabilidade e Impacto
+        prob_impacto_data = [
+            ['Probabilidade', 'Impacto'],
+            [f"{risco.get('probabilidade', 0)}/5", f"{risco.get('impacto_nivel', 0)}/5"]
+        ]
+        
+        prob_impacto_table = Table(prob_impacto_data, colWidths=[85*mm, 85*mm])
+        prob_impacto_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), HexColor('#f3f4f6')),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),
+            ('TOPPADDING', (0, 0), (-1, -1), 4),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+            ('GRID', (0, 0), (-1, -1), 1, HexColor('#d1d5db'))
+        ]))
+        
+        story.append(Spacer(1, 2*mm))
+        story.append(prob_impacto_table)
+        
+        # Adicionar quebra de página a cada 3 riscos para melhor legibilidade
+        if (i + 1) % 3 == 0 and i < len(riscos_selecionados) - 1:
+            story.append(PageBreak())
+    
+    # Rodapé com informações do CEA
+    story.append(Spacer(1, 10*mm))
+    rodape_texto = f"""
+    <b>Informações da Análise:</b><br/>
+    • Documento gerado em: {datetime.now().strftime('%d/%m/%Y às %H:%M')}<br/>
+    • Base de dados: Análise de 557 obras do CEA-SESP/PR<br/>
+    • Metodologia: Seleção inteligente baseada em histórico de obras similares<br/>
+    • Versão do sistema: 3.2-CEA-DELEGACIAS-CORRIGIDA
+    """
+    
+    story.append(Paragraph(rodape_texto, info_style))
+    
+    # Gerar o PDF
+    doc.build(story)
+    
+    # Retornar o buffer
+    buffer.seek(0)
+    return buffer
 
 def mapear_tipo_obra(forca, tipo_unidade):
     """Mapeia a combinação força + unidade para tipo de obra."""
@@ -661,52 +940,61 @@ def get_cea_insights():
 @app.route('/api/generate-pdf', methods=['POST'])
 def generate_pdf_endpoint():
     """
-    Endpoint para geração de PDF com contexto dos dados CEA + informações de tamanho.
+    Endpoint para geração de PDF real com os riscos identificados.
     """
-    dados_para_pdf = request.get_json()
-    
-    # Log melhorado com contexto CEA + tamanho
-    print("=== GERAÇÃO DE PDF COM DADOS CEA + TAMANHOS ===")
-    project_data = dados_para_pdf.get("projectData", {})
-    selected_risks = dados_para_pdf.get("selectedRisks", [])
-    debug_info = dados_para_pdf.get("debugInfo", {})
-    
-    print(f"Projeto: {project_data.get('forca')} - {project_data.get('tipoUnidade')}")
-    print(f"Riscos Selecionados: {len(selected_risks)}")
-    print(f"Base CEA: {debug_info.get('cea_context', {}).get('total_obras_analisadas', 0)} obras analisadas")
-    
-    tamanho_info = debug_info.get('tamanho_info', {})
-    print(f"Tamanho: {tamanho_info.get('categoria')} ({tamanho_info.get('area')} m²)")
-    
-    # Aqui seria implementada a lógica real de geração de PDF
-    return jsonify({
-        "message": "Solicitação de geração de PDF recebida (baseada em dados CEA + tamanhos).",
-        "status": "processed",
-        "data_summary": {
-            "project_fields": len(project_data),
-            "selected_risks": len(selected_risks),
-            "has_debug_info": bool(debug_info),
-            "cea_context": debug_info.get('cea_context', {}),
-            "size_info": tamanho_info
-        },
-        "pdf_content_preview": {
-            "titulo": f"Matriz de Risco - {project_data.get('forca', 'N/A')}",
-            "subtitulo": f"{project_data.get('tipoIntervencao', 'N/A')} - {project_data.get('tipoUnidade', 'N/A')}",
-            "base_dados": "Baseado na análise de 557 obras do CEA-SESP/PR",
-            "porte_empreendimento": f"Porte: {tamanho_info.get('categoria', 'N/A')} - {tamanho_info.get('area', 'N/A')} m²",
-            "total_riscos": len(selected_risks),
-            "distribuicao_niveis": debug_info.get('risk_distribution', {}),
-            "investimento_estimado": tamanho_info.get('investimento')
-        },
-        "next_steps": [
-            "Implementar biblioteca de geração de PDF (WeasyPrint/ReportLab)",
-            "Criar template HTML com dados CEA contextualizados",
-            "Incluir informações específicas do porte do empreendimento",
-            "Adicionar seção de padrões de delegacias quando aplicável",
-            "Incluir gráficos de distribuição baseados no histórico CEA",
-            "Adicionar seção de benchmarking com obras similares de mesmo porte"
-        ]
-    }), 200
+    try:
+        dados_para_pdf = request.get_json()
+        
+        if not dados_para_pdf:
+            return jsonify({"error": "Nenhum dado recebido para geração do PDF."}), 400
+        
+        # Extrair dados
+        project_data = dados_para_pdf.get("projectData", {})
+        selected_risks = dados_para_pdf.get("selectedRisks", [])
+        debug_info = dados_para_pdf.get("debugInfo", {})
+        
+        # Validar dados essenciais
+        if not selected_risks:
+            return jsonify({"error": "Nenhum risco foi selecionado para o PDF."}), 400
+        
+        if not project_data.get('forca') or not project_data.get('tipoUnidade'):
+            return jsonify({"error": "Informações do projeto incompletas."}), 400
+        
+        # Log para debug
+        print("=== GERANDO PDF REAL ===")
+        print(f"Projeto: {project_data.get('forca')} - {project_data.get('tipoUnidade')}")
+        print(f"Riscos: {len(selected_risks)}")
+        
+        # Gerar o PDF
+        pdf_buffer = gerar_pdf_riscos(project_data, selected_risks, debug_info)
+        
+        # Criar nome do arquivo
+        forca_abrev = {
+            'Corpo de Bombeiros Militar': 'CBMPR',
+            'Polícia Militar': 'PMPR',
+            'Polícia Civil': 'PCPR', 
+            'Polícia Penal': 'DEPPEN',
+            'Polícia Científica': 'PCP'
+        }.get(project_data.get('forca', ''), 'SESP')
+        
+        tipo_unidade = project_data.get('tipoUnidade', 'Unidade').replace(' ', '_').replace('(', '').replace(')', '').replace(',', '')
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"Matriz_Risco_{forca_abrev}_{tipo_unidade}_{timestamp}.pdf"
+        
+        # Retornar o arquivo PDF
+        return send_file(
+            pdf_buffer,
+            as_attachment=True,
+            download_name=filename,
+            mimetype='application/pdf'
+        )
+        
+    except Exception as e:
+        print(f"Erro ao gerar PDF: {str(e)}")
+        return jsonify({
+            "error": "Erro interno ao gerar PDF.",
+            "details": str(e)
+        }), 500
 
 # Endpoint para estatísticas baseadas no CEA + tamanhos
 @app.route('/api/statistics', methods=['GET'])
