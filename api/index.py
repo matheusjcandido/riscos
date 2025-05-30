@@ -188,15 +188,6 @@ def gerar_pdf_riscos(dados_projeto, riscos_selecionados, metadados_selecao):
         alignment=TA_CENTER
     )
     
-    info_style = ParagraphStyle(
-        'InfoStyle',
-        parent=styles['Normal'],
-        fontSize=10,
-        spaceAfter=6,
-        textColor=HexColor('#6b7280'),
-        alignment=TA_CENTER
-    )
-    
     risco_titulo_style = ParagraphStyle(
         'RiscoTitulo',
         parent=styles['Heading3'],
@@ -215,50 +206,21 @@ def gerar_pdf_riscos(dados_projeto, riscos_selecionados, metadados_selecao):
         leading=11
     )
     
+    mitigacao_style = ParagraphStyle(
+        'MitigacaoStyle',
+        parent=styles['Normal'],
+        fontSize=9,
+        spaceAfter=3,
+        alignment=TA_JUSTIFY,
+        leading=10
+    )
+    
     # Conteúdo do documento
     story = []
     
     # Cabeçalho
     story.append(Paragraph("MATRIZ DE RISCO - SESP/PR", titulo_style))
     story.append(Paragraph("Centro de Engenharia e Arquitetura", subtitulo_style))
-    story.append(Spacer(1, 10*mm))
-    
-    # Informações do projeto
-    projeto_info = [
-        f"<b>Força:</b> {dados_projeto.get('forca', 'N/A')}",
-        f"<b>Tipo de Unidade:</b> {dados_projeto.get('tipoUnidade', 'N/A')}",
-        f"<b>Tipo de Intervenção:</b> {dados_projeto.get('tipoIntervencao', 'N/A')}",
-        f"<b>Regime de Execução:</b> {dados_projeto.get('regimeExecucao', 'N/A')}",
-        f"<b>Valor Estimado:</b> {dados_projeto.get('valor', 'N/A')}",
-    ]
-    
-    # Adicionar informações de porte se disponível
-    tamanho_info = metadados_selecao.get('tamanho_info', {})
-    if tamanho_info.get('area'):
-        projeto_info.append(f"<b>Área:</b> {tamanho_info['area']} m²")
-    if tamanho_info.get('categoria'):
-        projeto_info.append(f"<b>Porte:</b> {tamanho_info['categoria'].replace('_', ' ').title()}")
-    
-    for info in projeto_info:
-        story.append(Paragraph(info, info_style))
-    
-    story.append(Spacer(1, 8*mm))
-    
-    # Resumo dos riscos
-    total_riscos = len(riscos_selecionados)
-    distribuicao = metadados_selecao.get('risk_distribution', {})
-    
-    resumo_texto = f"""
-    <b>Resumo da Análise:</b><br/>
-    • Total de riscos identificados: {total_riscos}<br/>
-    • Riscos Extremos: {distribuicao.get('extremo', 0)}<br/>
-    • Riscos Altos: {distribuicao.get('alto', 0)}<br/>
-    • Riscos Moderados: {distribuicao.get('moderado', 0)}<br/>
-    • Riscos Baixos: {distribuicao.get('baixo', 0)}<br/>
-    • Base de dados: 557 obras analisadas pelo CEA-SESP/PR
-    """
-    
-    story.append(Paragraph(resumo_texto, info_style))
     story.append(Spacer(1, 10*mm))
     
     # Legenda dos níveis de risco
@@ -332,29 +294,10 @@ def gerar_pdf_riscos(dados_projeto, riscos_selecionados, metadados_selecao):
         if risco.get('impacto'):
             story.append(Paragraph(f"<b>Impacto:</b> {risco.get('impacto')}", risco_texto_style))
         
-        # Mitigação e Correção em tabela
-        mitigacao_data = [
-            ['🛡️ Mitigação', '🔧 Correção'],
-            [risco.get('mitigacao', 'N/A'), risco.get('correcao', 'N/A')]
-        ]
-        
-        mitigacao_table = Table(mitigacao_data, colWidths=[85*mm, 85*mm])
-        mitigacao_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), HexColor('#f9fafb')),
-            ('TEXTCOLOR', (0, 0), (-1, 0), black),
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, -1), 8),
-            ('TOPPADDING', (0, 0), (-1, -1), 6),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-            ('LEFTPADDING', (0, 0), (-1, -1), 6),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 6),
-            ('GRID', (0, 0), (-1, -1), 1, HexColor('#e5e7eb'))
-        ]))
-        
+        # Mitigação e Correção (uma linha cada)
         story.append(Spacer(1, 3*mm))
-        story.append(mitigacao_table)
+        story.append(Paragraph(f"<b>Mitigação:</b> {risco.get('mitigacao', 'N/A')}", mitigacao_style))
+        story.append(Paragraph(f"<b>Correção:</b> {risco.get('correcao', 'N/A')}", mitigacao_style))
         
         # Probabilidade e Impacto
         prob_impacto_data = [
@@ -379,18 +322,6 @@ def gerar_pdf_riscos(dados_projeto, riscos_selecionados, metadados_selecao):
         # Adicionar quebra de página a cada 3 riscos para melhor legibilidade
         if (i + 1) % 3 == 0 and i < len(riscos_selecionados) - 1:
             story.append(PageBreak())
-    
-    # Rodapé com informações do CEA
-    story.append(Spacer(1, 10*mm))
-    rodape_texto = f"""
-    <b>Informações da Análise:</b><br/>
-    • Documento gerado em: {datetime.now().strftime('%d/%m/%Y às %H:%M')}<br/>
-    • Base de dados: Análise de 557 obras do CEA-SESP/PR<br/>
-    • Metodologia: Seleção inteligente baseada em histórico de obras similares<br/>
-    • Versão do sistema: 3.2-CEA-DELEGACIAS-CORRIGIDA
-    """
-    
-    story.append(Paragraph(rodape_texto, info_style))
     
     # Gerar o PDF
     doc.build(story)
