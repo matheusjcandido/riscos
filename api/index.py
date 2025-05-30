@@ -868,7 +868,119 @@ def get_cea_insights():
     
     return jsonify(insights)
 
-@app.route('/api/generate-pdf', methods=['POST'])
+@app.route('/api/all-risks', methods=['GET'])
+def get_all_risks():
+    """Retorna todos os riscos disponíveis na base de dados."""
+    if not RISK_DATABASE:
+        return jsonify({"error": "A base de dados de riscos não pôde ser carregada."}), 500
+    
+    try:
+        todos_os_riscos = RISK_DATABASE.get('riscos', [])
+        
+        # Organizar por fase
+        riscos_por_fase = {}
+        for risco in todos_os_riscos:
+            fase = risco.get('fase', 'Sem fase definida')
+            if fase not in riscos_por_fase:
+                riscos_por_fase[fase] = []
+            riscos_por_fase[fase].append(risco)
+        
+        # Ordenar riscos dentro de cada fase por nível (mais críticos primeiro)
+        for fase in riscos_por_fase:
+            riscos_por_fase[fase].sort(key=lambda x: -x.get('nivel_risco', 0))
+        
+        # Estatísticas gerais
+        stats = {
+            'total_riscos': len(todos_os_riscos),
+            'por_nivel': {
+                'extremo': len([r for r in todos_os_riscos if r.get('nivel_risco', 0) >= 15]),
+                'alto': len([r for r in todos_os_riscos if 8 <= r.get('nivel_risco', 0) < 15]),
+                'moderado': len([r for r in todos_os_riscos if 3 <= r.get('nivel_risco', 0) < 8]),
+                'baixo': len([r for r in todos_os_riscos if r.get('nivel_risco', 0) < 3])
+            },
+            'por_fase': {fase: len(riscos) for fase, riscos in riscos_por_fase.items()},
+            'por_responsavel': {}
+        }
+        
+        # Contar por responsável
+        for risco in todos_os_riscos:
+            resp = risco.get('responsavel', 'Não informado')
+            stats['por_responsavel'][resp] = stats['por_responsavel'].get(resp, 0) + 1
+        
+        return jsonify({
+            'riscos_por_fase': riscos_por_fase,
+            'todos_os_riscos': todos_os_riscos,
+            'estatisticas': stats,
+            'metadata': RISK_DATABASE.get('metadata', {}),
+            'escalas': {
+                'probabilidade': RISK_DATABASE.get('escala_probabilidade', {}),
+                'impacto': RISK_DATABASE.get('escala_impacto', {}),
+                'nivel_risco': RISK_DATABASE.get('nivel_risco', {})
+            }
+        })
+        
+    except Exception as e:
+        print(f"Erro ao buscar todos os riscos: {e}")
+        return jsonify({
+            "error": "Erro interno ao buscar riscos da base de dados.",
+            "details": str(e)
+        }), 500
+
+@app.route('/api/suggest-risk', methods=['POST'])
+def suggest_risk():
+    """Recebe sugestões de alterações ou inclusão de riscos."""
+    try:
+        sugestao_data = request.get_json()
+        
+        if not sugestao_data:
+            return jsonify({"error": "Nenhum dado de sugestão foi recebido."}), 400
+        
+        # Validar campos obrigatórios
+        campos_obrigatorios = ['tipo_sugestao', 'nome_sugerinte', 'email_sugerinte']
+        for campo in campos_obrigatorios:
+            if not sugestao_data.get(campo):
+                return jsonify({"error": f"Campo obrigatório ausente: {campo}"}), 400
+        
+        # Adicionar timestamp
+        sugestao_data['timestamp'] = datetime.now().isoformat()
+        sugestao_data['status'] = 'pendente'
+        
+        # Log da sugestão (em produção, salvar em banco de dados)
+        print("=== NOVA SUGESTÃO DE RISCO ===")
+        print(f"Tipo: {sugestao_data.get('tipo_sugestao')}")
+        print(f"Sugerinte: {sugestao_data.get('nome_sugerinte')} ({sugestao_data.get('email_sugerinte')})")
+        print(f"Timestamp: {sugestao_data.get('timestamp')}")
+        
+        if sugestao_data.get('tipo_sugestao') == 'alteracao':
+            print(f"Risco ID: {sugestao_data.get('risco_id')}")
+            print(f"Alteração: {sugestao_data.get('descricao_alteracao')}")
+        elif sugestao_data.get('tipo_sugestao') == 'novo_risco':
+            print(f"Novo Evento: {sugestao_data.get('novo_evento')}")
+            print(f"Nova Descrição: {sugestao_data.get('nova_descricao')}")
+        
+        print("================================")
+        
+        # Em produção, aqui você salvaria no banco de dados
+        # Por enquanto, apenas confirmamos o recebimento
+        
+        return jsonify({
+            "message": "Sugestão recebida com sucesso!",
+            "status": "success",
+            "timestamp": sugestao_data['timestamp'],
+            "id_interno": f"SUG_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+            "proximos_passos": [
+                "Sua sugestão será analisada pela equipe técnica do CEA",
+                "Você receberá um retorno por email em até 15 dias úteis",
+                "Sugestões aprovadas serão incluídas na próxima versão da base de dados"
+            ]
+        }), 200
+        
+    except Exception as e:
+        print(f"Erro ao processar sugestão: {e}")
+        return jsonify({
+            "error": "Erro interno ao processar sugestão.",
+            "details": str(e)
+        }), 500
 def generate_pdf_endpoint():
     """
     Endpoint para geração de PDF real com os riscos identificados.
