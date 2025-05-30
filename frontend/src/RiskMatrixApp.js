@@ -478,42 +478,48 @@ const RiskMatrixApp = () => {
         }),
       });
 
-      if (response.ok) {
-        // Obter o blob do PDF
-        const blob = await response.blob();
-        
-        // Criar URL para download
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        
-        // Gerar nome do arquivo
-        const forcaAbrev = {
-          'Corpo de Bombeiros Militar': 'CBMPR',
-          'Polícia Militar': 'PMPR',
-          'Polícia Civil': 'PCPR',
-          'Polícia Penal': 'DEPPEN',
-          'Polícia Científica': 'PCP'
-        }[projectData.forca] || 'SESP';
-        
-        const tipoUnidade = projectData.tipoUnidade.replace(/\s+/g, '_').replace(/[(),.]/g, '');
-        const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, '').replace('T', '_');
-        const filename = `Matriz_Risco_${forcaAbrev}_${tipoUnidade}_${timestamp}.pdf`;
-        
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        
-        // Limpeza
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-        
-        setCurrentStep(3);
-      } else {
+      if (!response.ok) {
+        // Se não foi ok, tentar ler como JSON para pegar a mensagem de erro
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Falha ao gerar PDF no servidor.');
+        throw new Error(errorData.error || `Erro HTTP: ${response.status}`);
       }
+
+      // Se foi ok, tratar como PDF (blob)
+      const blob = await response.blob();
+      
+      // Verificar se realmente recebemos um PDF
+      if (blob.type !== 'application/pdf') {
+        throw new Error('Resposta não é um PDF válido');
+      }
+      
+      // Criar URL para download
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      
+      // Gerar nome do arquivo
+      const forcaAbrev = {
+        'Corpo de Bombeiros Militar': 'CBMPR',
+        'Polícia Militar': 'PMPR',
+        'Polícia Civil': 'PCPR',
+        'Polícia Penal': 'DEPPEN',
+        'Polícia Científica': 'PCP'
+      }[projectData.forca] || 'SESP';
+      
+      const tipoUnidade = projectData.tipoUnidade.replace(/\s+/g, '_').replace(/[(),.]/g, '');
+      const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, '').replace('T', '_');
+      const filename = `Matriz_Risco_${forcaAbrev}_${tipoUnidade}_${timestamp}.pdf`;
+      
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      
+      // Limpeza
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      setCurrentStep(3);
     } catch (error) {
       console.error('Erro ao gerar PDF:', error);
       setError(`Erro ao gerar PDF: ${error.message}`);
