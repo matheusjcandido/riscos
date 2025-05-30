@@ -447,22 +447,60 @@ const RiskMatrixApp = () => {
 
   const generatePDF = async () => {
     try {
+      setIsGenerating(true);
+      
       const response = await fetch(`${getApiUrl()}/api/generate-pdf`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectData, selectedRisks, debugInfo }),
+        body: JSON.stringify({ 
+          projectData, 
+          selectedRisks, 
+          debugInfo 
+        }),
       });
 
       if (response.ok) {
-        alert('Solicitação de PDF enviada com sucesso!');
+        // Obter o blob do PDF
+        const blob = await response.blob();
+        
+        // Criar URL para download
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        
+        // Gerar nome do arquivo
+        const forcaAbrev = {
+          'Corpo de Bombeiros Militar': 'CBMPR',
+          'Polícia Militar': 'PMPR',
+          'Polícia Civil': 'PCPR',
+          'Polícia Penal': 'DEPPEN',
+          'Polícia Científica': 'PCP'
+        }[projectData.forca] || 'SESP';
+        
+        const tipoUnidade = projectData.tipoUnidade.replace(/\s+/g, '_').replace(/[(),.]/g, '');
+        const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, '').replace('T', '_');
+        const filename = `Matriz_Risco_${forcaAbrev}_${tipoUnidade}_${timestamp}.pdf`;
+        
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        
+        // Limpeza
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        setCurrentStep(3);
       } else {
-        throw new Error('Falha ao gerar PDF no backend.');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Falha ao gerar PDF no servidor.');
       }
     } catch (error) {
       console.error('Erro ao gerar PDF:', error);
-      alert('Funcionalidade de PDF ainda não implementada completamente.');
+      setError(`Erro ao gerar PDF: ${error.message}`);
+    } finally {
+      setIsGenerating(false);
     }
-    setCurrentStep(3);
   };
 
   const isFormValid = () => {
@@ -1015,10 +1053,20 @@ const RiskMatrixApp = () => {
                   </div>
                   <button
                     onClick={generatePDF}
-                    className="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 flex items-center space-x-2 transition-all duration-200 shadow-lg hover:shadow-xl"
+                    disabled={isGenerating}
+                    className="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed flex items-center space-x-2 transition-all duration-200 shadow-lg hover:shadow-xl"
                   >
-                    <Download className="w-4 h-4" />
-                    <span>Gerar PDF</span>
+                    {isGenerating ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        <span>Gerando PDF...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Download className="w-4 h-4" />
+                        <span>Gerar PDF</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
@@ -1126,11 +1174,20 @@ const RiskMatrixApp = () => {
                   </button>
                   <button
                     onClick={generatePDF}
-                    disabled={selectedRisks.length === 0}
+                    disabled={selectedRisks.length === 0 || isGenerating}
                     className="px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed flex items-center justify-center space-x-2 transition-all duration-200 shadow-lg hover:shadow-xl"
                   >
-                    <Download className="w-4 h-4" />
-                    <span>Gerar Matriz em PDF</span>
+                    {isGenerating ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        <span>Gerando PDF...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Download className="w-4 h-4" />
+                        <span>Gerar Matriz em PDF</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
@@ -1144,10 +1201,10 @@ const RiskMatrixApp = () => {
             <div className="p-4 bg-green-100 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
               <CheckCircle className="w-12 h-12 text-green-600" />
             </div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Matriz de Risco Processada!</h2>
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">PDF Gerado com Sucesso!</h2>
             <p className="text-gray-600 mb-8 max-w-lg mx-auto leading-relaxed">
-              A sua Matriz de Risco foi processada com sucesso baseada na análise de 557 obras do CEA, 
-              considerando o porte e especificidades do empreendimento. A funcionalidade de download do PDF será implementada em breve.
+              Sua Matriz de Risco foi gerada e baixada com sucesso! O documento contém todos os {selectedRisks.length} riscos 
+              identificados para o projeto, baseado na análise de 557 obras do CEA e considerando o porte específico do empreendimento.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
