@@ -2,11 +2,21 @@
   "base_riscos_cea": {
     "metadata": {
       "orgao": "Centro de Engenharia e Arquitetura - Secretaria de Segurança Pública do Paraná",
-      "versao": "3.0",
-      "total_riscos": 80,
+      "versao": "4.0",
+      "total_riscos": 85,
       "data_criacao": "2025-05-26",
-      "data_atualizacao": "2025-05-28",
-      "features": ["advanced_selection", "regime_execucao", "debug_info", "fase_completa"]
+      "data_atualizacao": "2025-06-02",
+      "features": ["advanced_selection", "regime_execucao", "debug_info", "fase_completa", "pos_entrega_risks", "criterios_climaticos_objetivos", "responsabilidades_hibridas"],
+      "fonte_melhorias": "Matriz de Risco Delegacia Cidadã Padrão IA - Porecatu/PR",
+      "changelog": {
+        "v4.0": [
+          "Adicionados 5 novos riscos específicos (IDs 81-85)",
+          "Melhorados critérios climáticos com base em média histórica",
+          "Refinadas responsabilidades para riscos geotécnicos",
+          "Nova categoria: Riscos de Garantia e Manutenção",
+          "Critérios mais objetivos para delegacias padrão"
+        ]
+      }
     },
     "escala_probabilidade": {
       "1": "Muito Baixa - Evento sem registro de ocorrência",
@@ -28,144 +38,156 @@
       "8-12": "Alto", 
       "15-25": "Extremo"
     },
+    "criterios_climaticos": {
+      "descricao": "Critérios objetivos baseados em dados históricos para eventos climáticos",
+      "media_historica": "Baseado nos últimos 12 meses de dados meteorológicos da região",
+      "responsabilidade_contratada": "Chuvas e eventos dentro da média histórica",
+      "responsabilidade_compartilhada": "Eventos acima da média histórica comprovada",
+      "fonte": "Delegacia Cidadã Padrão IA - Porecatu/PR"
+    },
     "regimes_execucao": {
       "empreitada_global": {
         "nome": "Empreitada por preço global",
         "descricao": "Contratação da execução da obra por preço total fixo",
-        "riscos_especificos": [3, 5, 8, 53, 67],
+        "riscos_especificos": [3, 5, 8, 53, 67, 81, 83],
         "riscos_reduzidos": []
       },
       "empreitada_unitario": {
         "nome": "Empreitada por preço unitário",
         "descricao": "Contratação com pagamento por medições de itens executados", 
-        "riscos_especificos": [20, 40, 64, 72],
+        "riscos_especificos": [20, 40, 64, 72, 83, 84],
         "riscos_reduzidos": []
       },
       "contratacao_integrada": {
         "nome": "Contratação integrada",
         "descricao": "Contratação que inclui elaboração e execução de projetos",
-        "riscos_especificos": [1, 2, 23, 37, 51, 52],
+        "riscos_especificos": [1, 2, 23, 37, 51, 52, 85],
         "riscos_reduzidos": []
       },
       "empreitada_integral": {
         "nome": "Empreitada integral", 
         "descricao": "Contratação de todas as etapas da obra",
-        "riscos_especificos": [1, 9, 28, 42, 51, 76],
+        "riscos_especificos": [1, 9, 28, 42, 51, 76, 81, 85],
         "riscos_reduzidos": []
       },
       "tarefa": {
         "nome": "Contratação por tarefa",
         "descricao": "Contratação de mão de obra para pequenos trabalhos",
         "riscos_especificos": [],
-        "riscos_reduzidos": [1, 4, 9, 51, 52]
+        "riscos_reduzidos": [1, 4, 9, 51, 52, 81, 85]
       }
     },
     "tipos_intervencao": {
       "construcao": {
         "nome": "Construção",
         "descricao": "Construção de nova edificação", 
-        "riscos_especificos": [1, 9, 21, 22, 54, 55, 58],
+        "riscos_especificos": [1, 9, 21, 22, 54, 55, 58, 85],
         "riscos_reduzidos": []
       },
       "reforma": {
         "nome": "Reforma",
         "descricao": "Modificação de edificação existente",
-        "riscos_especificos": [25, 29, 38, 44, 59, 68, 77],
+        "riscos_especificos": [25, 29, 38, 44, 59, 68, 77, 81, 82],
         "riscos_reduzidos": []
       },
       "reparos": {
         "nome": "Reparos",
         "descricao": "Correções e manutenções pontuais",
-        "riscos_especificos": [11, 28, 32, 60],
-        "riscos_reduzidos": [1, 4, 9, 51]
+        "riscos_especificos": [11, 28, 32, 60, 81, 82],
+        "riscos_reduzidos": [1, 4, 9, 51, 85]
       }
     },
     "faixas_valor": {
       "ate_100k": {
         "descricao": "Até R$ 100.000",
         "riscos_especificos": [],
-        "riscos_reduzidos": [1, 4, 23, 37, 51, 56]
+        "riscos_reduzidos": [1, 4, 23, 37, 51, 56, 81, 85]
       },
       "100k_500k": {
         "descricao": "R$ 100.001 a R$ 500.000",
-        "riscos_especificos": [60, 74],
+        "riscos_especificos": [60, 74, 82],
         "riscos_reduzidos": []
       },
       "500k_1m": {
         "descricao": "R$ 500.001 a R$ 1.000.000",
-        "riscos_especificos": [57, 61],
+        "riscos_especificos": [57, 61, 83],
         "riscos_reduzidos": []
       },
       "1m_5m": {
         "descricao": "R$ 1.000.001 a R$ 5.000.000",
-        "riscos_especificos": [23, 37, 56, 62, 73],
+        "riscos_especificos": [23, 37, 56, 62, 73, 83, 84],
         "riscos_reduzidos": []
       },
       "acima_5m": {
         "descricao": "Acima de R$ 5.000.000",
-        "riscos_especificos": [1, 4, 9, 23, 37, 46, 51, 56, 78, 79, 80],
+        "riscos_especificos": [1, 4, 9, 23, 37, 46, 51, 56, 78, 79, 80, 81, 83, 84, 85],
         "riscos_reduzidos": []
       }
     },
     "caracteristicas_especiais": {
       "obra_funcionamento": {
         "nome": "Obra em unidade em funcionamento",
-        "riscos_especificos": [25, 38, 59, 68],
+        "riscos_especificos": [25, 38, 59, 68, 82],
         "riscos_reduzidos": []
       },
       "licenciamento_ambiental": {
         "nome": "Necessita licenciamento ambiental",
-        "riscos_especificos": [9, 36, 55, 69],
+        "riscos_especificos": [9, 36, 55, 69, 84],
         "riscos_reduzidos": []
       },
       "alta_seguranca": {
         "nome": "Área de segurança máxima",
-        "riscos_especificos": [10, 12, 13, 15, 58, 70, 71],
+        "riscos_especificos": [10, 12, 13, 15, 58, 70, 71, 82],
         "riscos_reduzidos": []
       },
       "integracao_sistemas": {
         "nome": "Integração com sistemas existentes", 
-        "riscos_especificos": [14, 29, 34, 44, 65, 77],
+        "riscos_especificos": [14, 29, 34, 44, 65, 77, 85],
         "riscos_reduzidos": []
       },
       "demolicao": {
         "nome": "Demolição de estruturas",
-        "riscos_especificos": [19, 36, 66, 75],
+        "riscos_especificos": [19, 36, 66, 75, 82],
         "riscos_reduzidos": []
       },
       "instalacoes_especiais": {
         "nome": "Instalações especiais (blindagem, etc.)",
-        "riscos_especificos": [2, 15, 18, 63, 71],
+        "riscos_especificos": [2, 15, 18, 63, 71, 82],
+        "riscos_reduzidos": []
+      },
+      "garantia_estendida": {
+        "nome": "Obra com período de garantia estendido",
+        "riscos_especificos": [81, 82],
         "riscos_reduzidos": []
       }
     },
     "tipos_obra": {
       "presidios": {
-        "riscos_especificos": [1, 9, 10, 12, 13, 14, 15, 25, 30, 36, 38, 49, 58, 70, 71, 78],
+        "riscos_especificos": [1, 9, 10, 12, 13, 14, 15, 25, 30, 36, 38, 49, 58, 70, 71, 78, 81, 82],
         "descricao": "Estabelecimentos penais com requisitos de alta segurança",
         "peso_seguranca": 5,
         "complexidade_base": 4
       },
       "delegacias": {
-        "riscos_especificos": [1, 2, 14, 16, 17, 21, 27, 30, 37, 44, 59, 65, 77],
+        "riscos_especificos": [1, 2, 14, 16, 17, 21, 27, 30, 37, 44, 59, 65, 77, 81, 82, 83, 84, 85],
         "descricao": "Unidades policiais com necessidades de segurança moderada a alta",
         "peso_seguranca": 3,
         "complexidade_base": 3
       },
       "quarteis": {
-        "riscos_especificos": [1, 16, 17, 21, 27, 34, 37, 44, 45, 47, 65, 73],
+        "riscos_especificos": [1, 16, 17, 21, 27, 34, 37, 44, 45, 47, 65, 73, 82, 85],
         "descricao": "Instalações militares com requisitos específicos", 
         "peso_seguranca": 3,
         "complexidade_base": 3
       },
       "centrais_operacionais": {
-        "riscos_especificos": [2, 14, 16, 17, 29, 30, 32, 34, 40, 49, 63, 65, 79],
+        "riscos_especificos": [2, 14, 16, 17, 29, 30, 32, 34, 40, 49, 63, 65, 79, 82, 84, 85],
         "descricao": "Centrais de comando e controle",
         "peso_seguranca": 4,
         "complexidade_base": 4
       },
       "centros_treinamento": {
-        "riscos_especificos": [21, 27, 32, 34, 43, 45, 47, 74, 80],
+        "riscos_especificos": [21, 27, 32, 34, 43, 45, 47, 74, 80, 82],
         "descricao": "Centros de formação e treinamento",
         "peso_seguranca": 2,
         "complexidade_base": 2
@@ -1152,15 +1174,15 @@
         "fase": "Contratual (Execução)",
         "categoria": "Força Maior e Caso Fortuito",
         "evento": "Eventos climáticos extremos e atípicos",
-        "descricao": "Fenômenos naturais de intensidade muito superior à média histórica",
+        "descricao": "Fenômenos naturais de intensidade muito superior à média histórica dos últimos 12 meses",
         "impacto": "Paralisação da obra, destruição de partes construídas, atrasos significativos",
         "probabilidade": 1,
         "impacto_nivel": 3,
         "nivel_risco": 3,
         "classificacao": "Baixo",
         "responsavel": "Compartilhado",
-        "mitigacao": "Dados históricos climáticos no planejamento, medidas preventivas no canteiro",
-        "correcao": "Registro de eventos, avaliação de prorrogação de prazo"
+        "mitigacao": "Contratada arca com prejuízos de chuvas dentro da média histórica dos últimos 12 meses",
+        "correcao": "Prorrogar prazos apenas se chuvas acima da média histórica comprovadas"
       },
       {
         "id": 67,
@@ -1371,6 +1393,81 @@
         "responsavel": "Contratante",
         "mitigacao": "Programa de treinamento obrigatório, manuais em português, certificação de operadores",
         "correcao": "Treinamento adicional urgente, suporte técnico especializado"
+      },
+      {
+        "id": 81,
+        "fase": "Posterior à Contratação",
+        "categoria": "Garantia e Manutenção",
+        "evento": "Vícios ocultos ou problemas de qualidade após entrega da obra",
+        "descricao": "Necessidade de reparos durante período de garantia. Possível responsabilização da contratada para correção de defeitos não aparentes na entrega",
+        "impacto": "Custos de reparo, interrupção operacional, responsabilização da contratada, possível necessidade de retrabalho extenso",
+        "probabilidade": 2,
+        "impacto_nivel": 4,
+        "nivel_risco": 8,
+        "classificacao": "Alto",
+        "responsavel": "Contratada",
+        "mitigacao": "Controle rigoroso de qualidade durante execução. Testes e ensaios conforme normas técnicas. Inspeções detalhadas antes da entrega",
+        "correcao": "Correção dos vícios por conta da contratada durante período de garantia contratual. Acionamento imediato dos responsáveis"
+      },
+      {
+        "id": 82,
+        "fase": "Contratual (Execução)",
+        "categoria": "Logística e Fornecimento",
+        "evento": "Indisponibilidade de materiais ou equipamentos especificados",
+        "descricao": "Atrasos na execução por falta de insumos essenciais especificados no projeto, especialmente equipamentos de segurança especializados",
+        "impacto": "Paralisação de frentes de trabalho, atrasos no cronograma, possível necessidade de especificações alternativas",
+        "probabilidade": 2,
+        "impacto_nivel": 2,
+        "nivel_risco": 4,
+        "classificacao": "Baixo",
+        "responsavel": "Contratada",
+        "mitigacao": "Verificação prévia da disponibilidade de materiais no mercado regional. Previsão de similares técnicos. Planejamento antecipado de aquisições",
+        "correcao": "Substituição por materiais equivalentes mediante aprovação da fiscalização. Busca de fornecedores alternativos"
+      },
+      {
+        "id": 83,
+        "fase": "Contratual (Execução)",
+        "categoria": "Orçamentário e Financeiro",
+        "evento": "Aumento nos custos de insumos acima dos índices de reajuste contratual",
+        "descricao": "Alteração dos custos inicialmente previstos por variações de mercado superiores aos reajustes contratuais previstos",
+        "impacto": "Pressão por aditivos contratuais, desequilíbrio econômico-financeiro, possível abandono da obra",
+        "probabilidade": 2,
+        "impacto_nivel": 2,
+        "nivel_risco": 4,
+        "classificacao": "Baixo",
+        "responsavel": "Contratada",
+        "mitigacao": "Prever que contratada arca com aumentos não decorrentes de alterações tributárias ou políticas públicas. Definir claramente responsabilidades no contrato",
+        "correcao": "Negar pleitos de reequilíbrio por variações normais de mercado. Análise criteriosa de solicitações de aditivo"
+      },
+      {
+        "id": 84,
+        "fase": "Contratual (Execução)",
+        "categoria": "Regulatório e Tributário",
+        "evento": "Alteração nos custos por mudanças tributárias ou políticas públicas",
+        "descricao": "Alteração nos custos dos insumos por fatores externos regulatórios não previsíveis no momento da contratação",
+        "impacto": "Necessidade de reequilíbrio contratual, alteração do valor original, impacto orçamentário",
+        "probabilidade": 2,
+        "impacto_nivel": 2,
+        "nivel_risco": 4,
+        "classificacao": "Baixo",
+        "responsavel": "Contratante/Contratada",
+        "mitigacao": "Prever cláusula de reequilíbrio para alterações tributárias comprovadas. Monitoramento de mudanças regulatórias",
+        "correcao": "Proceder correção dos valores considerando as novas alíquotas vigentes. Formalizar aditivo contratual quando aplicável"
+      },
+      {
+        "id": 85,
+        "fase": "Contratual (Execução)",
+        "categoria": "Coordenação de Projetos",
+        "evento": "Falhas na coordenação entre disciplinas dos projetos de implantação",
+        "descricao": "Incompatibilidades que geram retrabalho e atrasos na execução por falta de coordenação adequada entre as diferentes disciplinas de projeto",
+        "impacto": "Necessidade de retrabalho, demolições parciais, atrasos no cronograma, custos adicionais não previstos",
+        "probabilidade": 2,
+        "impacto_nivel": 3,
+        "nivel_risco": 6,
+        "classificacao": "Moderado",
+        "responsavel": "Contratada",
+        "mitigacao": "Exigir coordenação adequada entre projetos. Revisão de compatibilidade antes da execução. Uso de tecnologias BIM quando aplicável",
+        "correcao": "Correção das incompatibilidades por conta da contratada. Aplicação de penalidades se houver atrasos decorrentes"
       }
     ]
   }
