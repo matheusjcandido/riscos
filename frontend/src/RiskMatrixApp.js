@@ -174,6 +174,124 @@ const RiskMatrixApp = () => {
   const [debugInfo, setDebugInfo] = useState(null);
   const [suggestionSuccess, setSuggestionSuccess] = useState(null);
 
+  // Componente para exibir risco expandido com mitigação e contingência
+  const RiscoExpandido = ({ risco, openSuggestionForm, getRiskColor, getRiskLevelText }) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+
+    return (
+      <div className="hover:bg-gray-50 transition-colors">
+        <div className="p-5">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                <span className="text-sm font-medium text-gray-500 bg-white px-2 py-1 rounded border">#{risco.id}</span>
+                <span className={`px-3 py-1 text-xs font-medium rounded-full ${getRiskColor(risco.nivel_risco)}`}>
+                  {getRiskLevelText(risco.classificacao, risco.nivel_risco)}
+                </span>
+                <span className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded-full">
+                  {risco.categoria}
+                </span>
+                <span className={`px-2 py-1 text-xs rounded-full ${
+                  risco.responsavel === 'Contratante' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'
+                }`}>
+                  {risco.responsavel}
+                </span>
+              </div>
+              
+              <h4 className="font-semibold text-gray-900 mb-2 text-lg leading-tight">{risco.evento}</h4>
+              <p className="text-sm text-gray-600 leading-relaxed mb-4">{risco.descricao}</p>
+              
+              {/* Impacto */}
+              {risco.impacto && (
+                <div className="mb-4 p-3 bg-red-50 rounded-lg border border-red-200">
+                  <h5 className="font-medium text-red-900 mb-1 flex items-center">
+                    <AlertTriangle className="w-4 h-4 mr-2" />
+                    Impacto
+                  </h5>
+                  <p className="text-sm text-red-800 leading-relaxed">{risco.impacto}</p>
+                </div>
+              )}
+
+              {/* Botão para expandir/recolher */}
+              <button
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="mb-4 px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg transition-colors flex items-center space-x-2 text-sm font-medium"
+              >
+                <span>{isExpanded ? 'Ocultar' : 'Ver'} Ações de Mitigação e Contingência</span>
+                <ChevronRight className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+              </button>
+
+              {/* Seção expandida com mitigação e contingência */}
+              {isExpanded && (
+                <div className="space-y-4 border-t border-gray-200 pt-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {/* Mitigação (Prevenção) */}
+                    <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                      <h5 className="font-medium text-green-900 mb-2 flex items-center">
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        🛡️ Ações de Mitigação (Prevenção)
+                      </h5>
+                      <p className="text-sm text-green-800 leading-relaxed">{risco.mitigacao}</p>
+                    </div>
+
+                    {/* Contingência (Correção) */}
+                    <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
+                      <h5 className="font-medium text-orange-900 mb-2 flex items-center">
+                        <Settings className="w-4 h-4 mr-2" />
+                        🔧 Ações de Contingência (Correção)
+                      </h5>
+                      <p className="text-sm text-orange-800 leading-relaxed">{risco.correcao}</p>
+                    </div>
+                  </div>
+
+                  {/* Indicadores de Probabilidade e Impacto */}
+                  <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+                    <div className="text-center">
+                      <div className="text-sm text-gray-600 mb-1">Probabilidade</div>
+                      <div className="flex justify-center space-x-1 mb-1">
+                        {[1, 2, 3, 4, 5].map((i) => (
+                          <div
+                            key={i}
+                            className={`w-3 h-3 rounded-full ${
+                              i <= risco.probabilidade ? 'bg-blue-500' : 'bg-gray-300'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <div className="text-lg font-semibold text-gray-800">{risco.probabilidade}/5</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-sm text-gray-600 mb-1">Impacto</div>
+                      <div className="flex justify-center space-x-1 mb-1">
+                        {[1, 2, 3, 4, 5].map((i) => (
+                          <div
+                            key={i}
+                            className={`w-3 h-3 rounded-full ${
+                              i <= risco.impacto_nivel ? 'bg-red-500' : 'bg-gray-300'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <div className="text-lg font-semibold text-gray-800">{risco.impacto_nivel}/5</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            <button 
+              onClick={() => openSuggestionForm(risco)}
+              className="ml-4 p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex-shrink-0"
+              title="Sugerir alteração para este risco"
+            >
+              <Edit2 className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const handleInputChange = (field, value) => {
     setProjectData(prev => {
       const newData = { ...prev, [field]: value };
@@ -781,10 +899,10 @@ const RiskMatrixApp = () => {
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900 flex items-center">
                     <Database className="w-6 h-6 mr-3 text-purple-600" />
-                    Base de Dados de Riscos
+                    Base de Dados de Riscos - CEA
                   </h2>
                   <p className="text-gray-600 mt-1">
-                    Total de <span className="font-semibold text-purple-600">{allRisksStats?.total_riscos || 0}</span> riscos cadastrados na base do CEA
+                    Total de <span className="font-semibold text-purple-600">{allRisksStats?.total_riscos || 0}</span> riscos organizados por fase cronológica do projeto
                   </p>
                 </div>
                 <button
@@ -800,7 +918,7 @@ const RiskMatrixApp = () => {
             <div className="p-6">
               {/* Estatísticas */}
               {allRisksStats && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                   <div className="bg-red-50 p-4 rounded-lg border border-red-200">
                     <div className="text-red-600 text-2xl font-bold">{allRisksStats.por_nivel?.extremo || 0}</div>
                     <div className="text-red-800 text-sm">Extremos</div>
@@ -820,48 +938,72 @@ const RiskMatrixApp = () => {
                 </div>
               )}
 
-              {/* Lista de riscos por fase */}
+              {/* Info sobre ordem cronológica */}
+              <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="flex items-center space-x-2 mb-2">
+                  <Info className="w-4 h-4 text-blue-600" />
+                  <span className="font-medium text-blue-900">Organização Cronológica</span>
+                </div>
+                <p className="text-blue-800 text-sm">
+                  Os riscos estão organizados por ordem cronológica das fases do projeto: do planejamento inicial até a operação e manutenção.
+                  Cada risco inclui descrição, impacto, medidas de mitigação (prevenção) e ações de contingência (correção).
+                </p>
+              </div>
+
+              {/* Lista de riscos por fase - ORDENADA CRONOLOGICAMENTE */}
               <div className="space-y-6">
-                {Object.entries(allRisks).map(([fase, riscos]) => (
-                  <div key={fase} className="border border-gray-200 rounded-xl overflow-hidden">
-                    <div className="bg-gray-50 px-6 py-4 border-b">
-                      <h3 className="font-semibold text-gray-900 flex items-center justify-between">
-                        <span>{fase}</span>
-                        <span className="text-sm bg-gray-200 text-gray-700 px-2 py-1 rounded-full">
-                          {riscos.length} riscos
-                        </span>
-                      </h3>
-                    </div>
-                    <div className="divide-y">
-                      {riscos.map((risco) => (
-                        <div key={risco.id} className="p-4 hover:bg-gray-50 transition-colors">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-2 mb-2">
-                                <span className="text-sm font-medium text-gray-500">#{risco.id}</span>
-                                <span className={`px-2 py-1 text-xs font-medium rounded-full ${getRiskColor(risco.nivel_risco)}`}>
-                                  {getRiskLevelText(risco.classificacao, risco.nivel_risco)}
-                                </span>
-                                <span className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded-full">
-                                  {risco.categoria}
-                                </span>
-                              </div>
-                              <h4 className="font-medium text-gray-900 mb-1">{risco.evento}</h4>
-                              <p className="text-sm text-gray-600 leading-relaxed">{risco.descricao}</p>
-                            </div>
-                            <button 
-                              onClick={() => openSuggestionForm(risco)}
-                              className="ml-4 p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                              title="Sugerir alteração"
-                            >
-                              <Edit2 className="w-4 h-4" />
-                            </button>
-                          </div>
+                {(() => {
+                  // Definir ordem cronológica das fases
+                  const ordemCronologica = [
+                    'Preliminar à Licitação',
+                    'Planejamento da Contratação',
+                    'Externa da Licitação', 
+                    'Contratual (Execução)',
+                    'Posterior à Contratação'
+                  ];
+                  
+                  // Ordenar as fases
+                  const fasesOrdenadas = ordemCronologica.filter(fase => allRisks[fase]);
+                  
+                  return fasesOrdenadas.map((fase, faseIndex) => {
+                    const riscos = allRisks[fase];
+                    
+                    // Ícones para cada fase
+                    const faseIcons = {
+                      'Preliminar à Licitação': '📋',
+                      'Planejamento da Contratação': '📐',
+                      'Externa da Licitação': '⚖️',
+                      'Contratual (Execução)': '🏗️',
+                      'Posterior à Contratação': '🔧'
+                    };
+                    
+                    return (
+                      <div key={fase} className="border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                        <div className={`px-6 py-4 border-b ${
+                          faseIndex === 0 ? 'bg-blue-50' : 
+                          faseIndex === 1 ? 'bg-green-50' :
+                          faseIndex === 2 ? 'bg-yellow-50' :
+                          faseIndex === 3 ? 'bg-orange-50' : 'bg-purple-50'
+                        }`}>
+                          <h3 className="font-semibold text-gray-900 flex items-center justify-between">
+                            <span className="flex items-center space-x-2">
+                              <span className="text-lg">{faseIcons[fase]}</span>
+                              <span>Fase {faseIndex + 1}: {fase}</span>
+                            </span>
+                            <span className="text-sm bg-white bg-opacity-70 text-gray-700 px-3 py-1 rounded-full font-medium">
+                              {riscos.length} riscos
+                            </span>
+                          </h3>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+                        <div className="divide-y divide-gray-100">
+                          {riscos.map((risco) => (
+                            <RiscoExpandido key={risco.id} risco={risco} openSuggestionForm={openSuggestionForm} getRiskColor={getRiskColor} getRiskLevelText={getRiskLevelText} />
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  });
+                })()}
               </div>
             </div>
           </div>
