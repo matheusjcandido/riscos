@@ -1,6 +1,6 @@
 import React from 'react';
-import './App.css'; // Arquivo CSS para o App (opcional)
-import RiskMatrixApp from './RiskMatrixApp'; // Seu componente de Matriz de Risco
+import './App.css';
+import RiskMatrixApp from './RiskMatrixApp';
 
 function App() {
   return (
