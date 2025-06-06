@@ -1,35 +1,65 @@
 {
   "name": "risk-matrix-frontend",
-  "version": "0.1.0",
+  "version": "3.2.0",
   "private": true,
+  "description": "Sistema de Matriz de Risco - SESP/PR CEA",
   "dependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-scripts": "5.0.1",
-    "lucide-react": "^0.263.1"
+    "lucide-react": "^0.263.1",
+    "web-vitals": "^3.3.2"
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "CI=false react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "build": "CI=false GENERATE_SOURCEMAP=false react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject",
+    "build:prod": "npm run build",
+    "serve": "npx serve -s build",
+    "analyze": "npm run build && npx source-map-explorer 'build/static/js/*.js'"
   },
   "eslintConfig": {
     "extends": [
       "react-app",
       "react-app/jest"
-    ]
+    ],
+    "rules": {
+      "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
+      "default-case": "off",
+      "default-case-last": "off",
+      "no-fallthrough": "warn"
+    }
   },
   "browserslist": {
     "production": [
       ">0.2%",
       "not dead",
-      "not op_mini all"
+      "not op_mini all",
+      "not chrome < 60",
+      "not safari < 10",
+      "not firefox < 54",
+      "not edge < 15"
     ],
     "development": [
       "last 1 chrome version",
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  }
+  },
+  "proxy": "http://localhost:5001",
+  "homepage": ".",
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  },
+  "keywords": [
+    "risk-matrix",
+    "sesp-pr",
+    "cea",
+    "construction",
+    "risk-management"
+  ],
+  "author": "SESP/PR - Centro de Engenharia e Arquitetura",
+  "license": "MIT"
 }
