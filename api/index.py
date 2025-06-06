@@ -292,23 +292,7 @@ def gerar_pdf_riscos(dados_projeto, riscos_selecionados, metadados_selecao):
         
         story.append(cabecalho_table)
         
-        # Título do evento
-        story.append(Spacer(1, 3*mm))
-        story.append(Paragraph(f"<b>{risco.get('evento', 'N/A')}</b>", risco_titulo_style))
-        
-        # Descrição
-        story.append(Paragraph(f"<b>Descrição:</b> {risco.get('descricao', 'N/A')}", risco_texto_style))
-        
-        # Impacto
-        if risco.get('impacto'):
-            story.append(Paragraph(f"<b>Impacto:</b> {risco.get('impacto')}", risco_texto_style))
-        
-        # Mitigação e Correção (uma linha cada)
-        story.append(Spacer(1, 3*mm))
-        story.append(Paragraph(f"<b>Mitigação:</b> {risco.get('mitigacao', 'N/A')}", mitigacao_style))
-        story.append(Paragraph(f"<b>Correção:</b> {risco.get('correcao', 'N/A')}", mitigacao_style))
-        
-        # Probabilidade e Impacto
+        # NOVA POSIÇÃO: Probabilidade e Impacto logo após o cabeçalho
         prob_impacto_data = [
             ['Probabilidade', 'Impacto'],
             [f"{risco.get('probabilidade', 0)}/5", f"{risco.get('impacto_nivel', 0)}/5"]
@@ -327,6 +311,22 @@ def gerar_pdf_riscos(dados_projeto, riscos_selecionados, metadados_selecao):
         
         story.append(Spacer(1, 2*mm))
         story.append(prob_impacto_table)
+        
+        # Título do evento
+        story.append(Spacer(1, 3*mm))
+        story.append(Paragraph(f"<b>{risco.get('evento', 'N/A')}</b>", risco_titulo_style))
+        
+        # Descrição
+        story.append(Paragraph(f"<b>Descrição:</b> {risco.get('descricao', 'N/A')}", risco_texto_style))
+        
+        # Impacto
+        if risco.get('impacto'):
+            story.append(Paragraph(f"<b>Impacto:</b> {risco.get('impacto')}", risco_texto_style))
+        
+        # Mitigação e Correção (uma linha cada)
+        story.append(Spacer(1, 3*mm))
+        story.append(Paragraph(f"<b>Mitigação:</b> {risco.get('mitigacao', 'N/A')}", mitigacao_style))
+        story.append(Paragraph(f"<b>Correção:</b> {risco.get('correcao', 'N/A')}", mitigacao_style))
         
         # Adicionar quebra de página a cada 3 riscos para melhor legibilidade
         if (i + 1) % 3 == 0 and i < len(riscos_selecionados) - 1:
