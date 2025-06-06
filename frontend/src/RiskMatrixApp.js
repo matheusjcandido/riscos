@@ -152,6 +152,7 @@ const RiskMatrixApp = () => {
     caracteristicas: []
   });
   const [selectedRisks, setSelectedRisks] = useState([]);
+  const [selectedRiskIds, setSelectedRiskIds] = useState(new Set());
   const [allRisks, setAllRisks] = useState(null);
   const [allRisksStats, setAllRisksStats] = useState(null);
   const [selectedRiskForSuggestion, setSelectedRiskForSuggestion] = useState(null);
@@ -234,6 +235,377 @@ const RiskMatrixApp = () => {
                       <p className="text-sm text-green-800 leading-relaxed">{risco.mitigacao}</p>
                     </div>
 
+                  {/* Resumo do projeto ATUALIZADO */}
+                  <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
+                    <h4 className="font-semibold text-blue-900 mb-3 flex items-center">
+                      <FileText className="w-4 h-4 mr-2" />
+                      Resumo do Projeto
+                    </h4>
+                    <div className="space-y-2 text-sm">
+                      <p><span className="font-medium">Força:</span> {projectData.forca || 'Não informado'}</p>
+                      <p><span className="font-medium">Unidade:</span> {projectData.tipoUnidade || 'Não informado'}</p>
+                      <p><span className="font-medium">Intervenção:</span> {projectData.tipoIntervencao || 'Não informado'}</p>
+                      <p><span className="font-medium">Regime:</span> {projectData.regimeExecucao || 'Não informado'}</p>
+                      <p><span className="font-medium">Valor:</span> {projectData.valor || 'Não informado'}</p>
+                      <p><span className="font-medium">Características:</span> {projectData.caracteristicas.length} selecionadas</p>
+                      {getUnidadeInfo() && (
+                        <p><span className="font-medium">Porte:</span> {getUnidadeInfo().categoria.replace('_', ' ')}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Info box com dados do CEA */}
+                  <div className="bg-green-50 rounded-xl p-6 border border-green-200">
+                    <h4 className="font-semibold text-green-900 mb-3 flex items-center">
+                      <Info className="w-4 h-4 mr-2" />
+                      Dados do CEA
+                    </h4>
+                    <div className="space-y-1 text-xs text-green-800">
+                      <p>• 557 obras analisadas do histórico CEA</p>
+                      <p>• Padrões de Delegacias Cidadãs (IA, I, II, III)</p>
+                      <p>• Polícia Penal: Casa de Custódia e Penitenciária</p>
+                      <p>• Polícia Científica: UETC Básica, Intermediária, Posto Avançado</p>
+                      <p>• CBMPR e PMPR: Pelotão, Companhia, Batalhão, Comando Regional</p>
+                      <p>• Riscos ajustados por porte (pequeno a muito grande)</p>
+                      <p className="pt-1 border-t border-green-200">
+                        <strong>💡 Dica:</strong> Use "Ver Todos os Riscos" no topo para explorar a base completa
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Explicação da lógica de seleção ATUALIZADA */}
+                  <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
+                    <h4 className="font-semibold text-blue-900 mb-3 flex items-center">
+                      <Settings className="w-4 h-4 mr-2" />
+                      Como Funciona a Seleção de Riscos
+                    </h4>
+                    <div className="space-y-2 text-xs text-blue-800">
+                      <p><strong>1. Base por Tipo de Obra:</strong> Cada combinação força + unidade define riscos específicos</p>
+                      <p><strong>2. Ajuste por Porte:</strong> Pequeno reduz complexidade, grande adiciona mais riscos</p>
+                      <p><strong>3. Ajuste por Intervenção:</strong> Construção adiciona riscos de planejamento, reparos reduz complexidade</p>
+                      <p><strong>4. Regime de Execução:</strong> Contratação integrada adiciona riscos de projeto, tarefa simplifica</p>
+                      <p><strong>5. Características Especiais:</strong> Cada item selecionado adiciona riscos específicos</p>
+                      <p className="pt-1 border-t border-blue-200"><em>Resultado: Lista personalizada considerando o porte e complexidade do empreendimento</em></p>
+                    </div>
+                  </div>
+
+                  {/* Seção sobre contribuições */}
+                  <div className="bg-green-50 rounded-xl p-6 border border-green-200">
+                    <h4 className="font-semibold text-green-900 mb-3 flex items-center">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Contribua com a Base de Dados
+                    </h4>
+                    <div className="space-y-2 text-xs text-green-800">
+                      <p>Nossa base de riscos é constantemente atualizada com a contribuição de especialistas.</p>
+                      <p><strong>Você pode:</strong></p>
+                      <p>• Visualizar todos os riscos cadastrados na base de dados</p>
+                      <p>• Sugerir alterações em riscos existentes</p>
+                      <p>• Propor novos riscos baseados em sua experiência</p>
+                      <p>• Melhorar descrições, mitigações e correções</p>
+                      <p className="pt-1 border-t border-green-200">
+                        <em>Suas sugestões são analisadas pela equipe técnica do CEA em até 15 dias úteis</em>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-8 flex justify-end">
+                <button
+                  onClick={generateRisks}
+                  disabled={!isFormValid() || isGenerating}
+                  className="px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed flex items-center space-x-3 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                >
+                  {isGenerating ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      <span>Gerando Riscos...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="font-medium">Gerar Matriz de Risco</span>
+                      <ChevronRight className="w-5 h-5" />
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Step 2: Revisão de Riscos */}
+        {currentPage === 'form' && currentStep === 2 && (
+          <div className="space-y-6">
+            {/* Debug Info - Mostrar lógica de seleção ATUALIZADA */}
+            {debugInfo && (
+              <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
+                <h3 className="font-semibold text-blue-900 mb-3 flex items-center">
+                  <Info className="w-5 h-5 mr-2" />
+                  Lógica de Seleção Aplicada (Baseada nos Dados CEA + Porte)
+                </h3>
+                <div className="space-y-2 text-sm">
+                  <p><span className="font-medium">Tipo de Obra Base:</span> {debugInfo.tipo_obra_chave || 'Não identificado'}</p>
+                  <p><span className="font-medium">Porte do Empreendimento:</span> {debugInfo.tamanho_info?.categoria?.replace('_', ' ') || 'Não definido'}</p>
+                  {debugInfo.tamanho_info?.area && (
+                    <p><span className="font-medium">Área:</span> {debugInfo.tamanho_info.area} m²</p>
+                  )}
+                  <p><span className="font-medium">Riscos Adicionais:</span> {debugInfo.additional_risks.length} identificados</p>
+                  <p><span className="font-medium">Riscos Excluídos:</span> {debugInfo.excluded_risks.length} removidos</p>
+                  <div className="mt-3">
+                    <span className="font-medium">Critérios Aplicados:</span>
+                    <ul className="mt-1 space-y-1 ml-4">
+                      {debugInfo.debug_logic.map((logic, index) => (
+                        <li key={index} className="text-xs text-gray-600">• {logic}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100">
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 border-b">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-1">Riscos Identificados</h2>
+                    <p className="text-gray-600">
+                      <span className="font-semibold text-blue-600">{selectedRisks.length}</span> riscos identificados, 
+                      <span className="font-semibold text-green-600"> {selectedRiskIds.size}</span> selecionados para: 
+                      <span className="font-medium"> {projectData.tipoIntervencao} de {projectData.tipoUnidade} - {projectData.forca}</span>
+                    </p>
+                    {debugInfo?.tamanho_info && (
+                      <p className="text-sm text-gray-500 mt-1">
+                        Porte: {debugInfo.tamanho_info.categoria.replace('_', ' ')} 
+                        {debugInfo.tamanho_info.area && ` (${debugInfo.tamanho_info.area} m²)`}
+                      </p>
+                    )}
+                  </div>
+                  
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <button
+                      onClick={toggleAllRisks}
+                      className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center space-x-2"
+                    >
+                      <span>{selectedRiskIds.size === selectedRisks.length ? 'Desmarcar Todos' : 'Selecionar Todos'}</span>
+                    </button>
+                    
+                    <button
+                      onClick={generatePDF}
+                      disabled={isGenerating || selectedRiskIds.size === 0}
+                      className="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed flex items-center space-x-2 transition-all duration-200 shadow-lg hover:shadow-xl"
+                    >
+                      {isGenerating ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          <span>Gerando PDF...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Download className="w-4 h-4" />
+                          <span>Gerar PDF ({selectedRiskIds.size})</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6">
+                <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <Info className="w-4 h-4 text-blue-600" />
+                    <span className="font-medium text-gray-700">Legenda dos Níveis de Risco:</span>
+                  </div>
+                  <div className="flex flex-wrap gap-3 text-sm">
+                    <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full border border-red-200">Extremo (15-25)</span>
+                    <span className="px-3 py-1 bg-orange-100 text-orange-800 rounded-full border border-orange-200">Alto (8-12)</span>
+                    <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full border border-yellow-200">Moderado (3-6)</span>
+                    <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full border border-blue-200">Baixo (1-2)</span>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  {selectedRisks.length > 0 ? selectedRisks.map((risco) => (
+                    <div key={risco.id} className={`border-2 rounded-xl p-6 transition-all duration-200 ${
+                      selectedRiskIds.has(risco.id) 
+                        ? `${getRiskColor(risco.nivel_risco)} hover:shadow-lg` 
+                        : 'border-gray-200 bg-gray-50 opacity-60 hover:opacity-80'
+                    }`}>
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1">
+                          <div className="flex flex-wrap items-center gap-2 mb-3">
+                            <span className="text-sm font-medium text-gray-500 bg-white px-2 py-1 rounded border">#{risco.id}</span>
+                            <span className={`px-3 py-1 text-sm font-medium rounded-full border-2 ${
+                              selectedRiskIds.has(risco.id) ? getRiskColor(risco.nivel_risco) : 'bg-gray-100 text-gray-500 border-gray-300'
+                            }`}>
+                              {getRiskLevelText(risco.classificacao, risco.nivel_risco)}
+                            </span>
+                            <span className="px-3 py-1 text-sm bg-gray-100 text-gray-800 rounded-full">
+                              {risco.fase}
+                            </span>
+                             <span className={`px-3 py-1 text-sm rounded-full ${
+                              risco.responsavel === 'Contratante' ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-orange-800'
+                             }`}>
+                              {risco.responsavel}
+                             </span>
+                          </div>
+                          <h3 className="font-semibold text-gray-900 mb-2 text-lg">{risco.evento}</h3>
+                          <p className="text-sm text-gray-700 mb-4 leading-relaxed">
+                            <span className="font-medium">Descrição:</span> {risco.descricao}
+                          </p>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                            <div className="p-3 bg-white bg-opacity-50 rounded-lg">
+                              <span className="font-medium text-gray-800 block mb-1">🛡️ Mitigação:</span>
+                              <p className="text-gray-700 leading-relaxed">{risco.mitigacao}</p>
+                            </div>
+                            <div className="p-3 bg-white bg-opacity-50 rounded-lg">
+                              <span className="font-medium text-gray-800 block mb-1">🔧 Correção:</span>
+                              <p className="text-gray-700 leading-relaxed">{risco.correcao}</p>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* SUBSTITUIR O BOTÃO DE EDIÇÃO PELA CHECKBOX */}
+                        <div className="ml-4 flex flex-col items-center space-y-2">
+                          <label className="flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={selectedRiskIds.has(risco.id)}
+                              onChange={() => toggleRiskSelection(risco.id)}
+                              className="w-5 h-5 text-green-600 border-2 border-gray-300 rounded focus:ring-green-500 focus:ring-2"
+                            />
+                            <span className="ml-2 text-sm text-gray-600 font-medium">
+                              {selectedRiskIds.has(risco.id) ? 'Incluir' : 'Excluir'}
+                            </span>
+                          </label>
+                          <button 
+                            onClick={() => openSuggestionForm(risco)}
+                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            title="Sugerir alteração para este risco"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-6 space-y-2 sm:space-y-0 text-sm border-t border-white border-opacity-50 pt-4">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-gray-600 font-medium">Probabilidade:</span>
+                          <div className="flex space-x-1">
+                            {[1, 2, 3, 4, 5].map((i) => (
+                              <div
+                                key={i}
+                                className={`w-3 h-3 rounded-full transition-colors ${
+                                  i <= risco.probabilidade ? 'bg-blue-500' : 'bg-gray-300'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                          <span className="text-gray-800 font-semibold">{risco.probabilidade}/5</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-gray-600 font-medium">Impacto:</span>
+                          <div className="flex space-x-1">
+                            {[1, 2, 3, 4, 5].map((i) => (
+                              <div
+                                key={i}
+                                className={`w-3 h-3 rounded-full transition-colors ${
+                                  i <= risco.impacto_nivel ? 'bg-red-500' : 'bg-gray-300'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                          <span className="text-gray-800 font-semibold">{risco.impacto_nivel}/5</span>
+                        </div>
+                      </div>
+                    </div>
+                  )) : (
+                    <div className="text-center py-12">
+                      <div className="p-4 bg-gray-100 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                        <AlertTriangle className="w-8 h-8 text-gray-400" />
+                      </div>
+                      <h3 className="font-medium text-gray-900 mb-2">Nenhum risco identificado</h3>
+                      <p className="text-gray-600">Nenhum risco foi selecionado para os critérios informados.</p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-8 flex flex-col sm:flex-row justify-between gap-4">
+                  <button
+                    onClick={() => setCurrentStep(1)}
+                    className="px-6 py-3 text-gray-600 border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+                  >
+                    ← Voltar
+                  </button>
+                  <button
+                    onClick={generatePDF}
+                    disabled={selectedRiskIds.size === 0 || isGenerating}
+                    className="px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed flex items-center justify-center space-x-2 transition-all duration-200 shadow-lg hover:shadow-xl"
+                  >
+                    {isGenerating ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        <span>Gerando PDF...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Download className="w-4 h-4" />
+                        <span>Gerar Matriz em PDF ({selectedRiskIds.size} riscos)</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Step 3: Geração PDF */}
+        {currentPage === 'form' && currentStep === 3 && (
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-12 text-center">
+            <div className="p-4 bg-green-100 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+              <CheckCircle className="w-12 h-12 text-green-600" />
+            </div>
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">PDF Gerado com Sucesso!</h2>
+            <p className="text-gray-600 mb-8 max-w-lg mx-auto leading-relaxed">
+              Sua Matriz de Risco foi gerada e baixada com sucesso! O documento contém {selectedRiskIds.size} riscos 
+              selecionados para o projeto, baseado na análise de 557 obras do CEA e considerando o porte específico do empreendimento.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <button
+                onClick={() => setCurrentStep(2)}
+                className="px-8 py-3 text-blue-600 border-2 border-blue-600 rounded-lg hover:bg-blue-50 transition-colors duration-200"
+              >
+                ← Revisar Riscos
+              </button>
+              <button
+                onClick={() => {
+                  setCurrentStep(1);
+                  setSelectedRisks([]);
+                  setSelectedRiskIds(new Set());
+                  setDebugInfo(null);
+                  setProjectData({
+                    forca: '',
+                    tipoUnidade: '',
+                    tipoIntervencao: '',
+                    regimeExecucao: '',
+                    valor: '',
+                    caracteristicas: []
+                  });
+                }}
+                className="px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl"
+              >
+                🚀 Novo Projeto
+              </button>
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
+  );
+};
+
+export default RiskMatrixApp;
+
                     {/* Contingência (Correção) */}
                     <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
                       <h5 className="font-medium text-orange-900 mb-2 flex items-center">
@@ -314,6 +686,28 @@ const RiskMatrixApp = () => {
   // Função para obter informações do tamanho da unidade
   const getTamanhoInfo = (tipoUnidade) => {
     return tamanhosPorUnidade[tipoUnidade] || { categoria: 'medio', area: 0 };
+  };
+
+  // Função para alternar seleção de risco
+  const toggleRiskSelection = (riskId) => {
+    setSelectedRiskIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(riskId)) {
+        newSet.delete(riskId);
+      } else {
+        newSet.add(riskId);
+      }
+      return newSet;
+    });
+  };
+
+  // Função para selecionar/desselecionar todos os riscos
+  const toggleAllRisks = () => {
+    if (selectedRiskIds.size === selectedRisks.length) {
+      setSelectedRiskIds(new Set());
+    } else {
+      setSelectedRiskIds(new Set(selectedRisks.map(risk => risk.id)));
+    }
   };
 
   // Lógica APRIMORADA de seleção de riscos baseada nos dados do CEA E TAMANHOS
@@ -547,18 +941,24 @@ const RiskMatrixApp = () => {
       if (data.error) {
         setError(`Erro do servidor: ${data.error}`);
         setSelectedRisks([]);
+        setSelectedRiskIds(new Set());
       } else if (data.warning) {
         console.warn(`Aviso do servidor: ${data.warning}`);
         setSelectedRisks(data.selected_risks || []);
+        // Inicializar todos como selecionados
+        setSelectedRiskIds(new Set((data.selected_risks || []).map(risk => risk.id)));
         setCurrentStep(2);
       } else {
         setSelectedRisks(data.selected_risks || []);
+        // Inicializar todos como selecionados
+        setSelectedRiskIds(new Set((data.selected_risks || []).map(risk => risk.id)));
         setCurrentStep(2);
       }
     } catch (error) {
       console.error('Erro ao gerar riscos via API:', error);
       setError('Falha ao comunicar com o servidor. Tente novamente.');
       setSelectedRisks([]);
+      setSelectedRiskIds(new Set());
     } finally {
       setIsGenerating(false);
     }
@@ -586,12 +986,20 @@ const RiskMatrixApp = () => {
     try {
       setIsGenerating(true);
       
+      // Filtrar apenas os riscos selecionados
+      const riscosParaPDF = selectedRisks.filter(risk => selectedRiskIds.has(risk.id));
+      
+      if (riscosParaPDF.length === 0) {
+        setError('Nenhum risco foi selecionado para gerar o PDF.');
+        return;
+      }
+      
       const response = await fetch(`${getApiUrl()}/api/generate-pdf`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           projectData, 
-          selectedRisks, 
+          selectedRisks: riscosParaPDF, // Usar apenas os selecionados
           debugInfo 
         }),
       });
@@ -1615,337 +2023,3 @@ const RiskMatrixApp = () => {
                       </div>
                     </div>
                   </div>
-
-                  {/* Resumo do projeto ATUALIZADO */}
-                  <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
-                    <h4 className="font-semibold text-blue-900 mb-3 flex items-center">
-                      <FileText className="w-4 h-4 mr-2" />
-                      Resumo do Projeto
-                    </h4>
-                    <div className="space-y-2 text-sm">
-                      <p><span className="font-medium">Força:</span> {projectData.forca || 'Não informado'}</p>
-                      <p><span className="font-medium">Unidade:</span> {projectData.tipoUnidade || 'Não informado'}</p>
-                      <p><span className="font-medium">Intervenção:</span> {projectData.tipoIntervencao || 'Não informado'}</p>
-                      <p><span className="font-medium">Regime:</span> {projectData.regimeExecucao || 'Não informado'}</p>
-                      <p><span className="font-medium">Valor:</span> {projectData.valor || 'Não informado'}</p>
-                      <p><span className="font-medium">Características:</span> {projectData.caracteristicas.length} selecionadas</p>
-                      {getUnidadeInfo() && (
-                        <p><span className="font-medium">Porte:</span> {getUnidadeInfo().categoria.replace('_', ' ')}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Info box com dados do CEA */}
-                  <div className="bg-green-50 rounded-xl p-6 border border-green-200">
-                    <h4 className="font-semibold text-green-900 mb-3 flex items-center">
-                      <Info className="w-4 h-4 mr-2" />
-                      Dados do CEA
-                    </h4>
-                    <div className="space-y-1 text-xs text-green-800">
-                      <p>• 557 obras analisadas do histórico CEA</p>
-                      <p>• Padrões de Delegacias Cidadãs (IA, I, II, III)</p>
-                      <p>• Polícia Penal: Casa de Custódia e Penitenciária</p>
-                      <p>• Polícia Científica: UETC Básica, Intermediária, Posto Avançado</p>
-                      <p>• CBMPR e PMPR: Pelotão, Companhia, Batalhão, Comando Regional</p>
-                      <p>• Riscos ajustados por porte (pequeno a muito grande)</p>
-                      <p className="pt-1 border-t border-green-200">
-                        <strong>💡 Dica:</strong> Use "Ver Todos os Riscos" no topo para explorar a base completa
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Explicação da lógica de seleção ATUALIZADA */}
-                  <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
-                    <h4 className="font-semibold text-blue-900 mb-3 flex items-center">
-                      <Settings className="w-4 h-4 mr-2" />
-                      Como Funciona a Seleção de Riscos
-                    </h4>
-                    <div className="space-y-2 text-xs text-blue-800">
-                      <p><strong>1. Base por Tipo de Obra:</strong> Cada combinação força + unidade define riscos específicos</p>
-                      <p><strong>2. Ajuste por Porte:</strong> Pequeno reduz complexidade, grande adiciona mais riscos</p>
-                      <p><strong>3. Ajuste por Intervenção:</strong> Construção adiciona riscos de planejamento, reparos reduz complexidade</p>
-                      <p><strong>4. Regime de Execução:</strong> Contratação integrada adiciona riscos de projeto, tarefa simplifica</p>
-                      <p><strong>5. Características Especiais:</strong> Cada item selecionado adiciona riscos específicos</p>
-                      <p className="pt-1 border-t border-blue-200"><em>Resultado: Lista personalizada considerando o porte e complexidade do empreendimento</em></p>
-                    </div>
-                  </div>
-
-                  {/* Seção sobre contribuições */}
-                  <div className="bg-green-50 rounded-xl p-6 border border-green-200">
-                    <h4 className="font-semibold text-green-900 mb-3 flex items-center">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Contribua com a Base de Dados
-                    </h4>
-                    <div className="space-y-2 text-xs text-green-800">
-                      <p>Nossa base de riscos é constantemente atualizada com a contribuição de especialistas.</p>
-                      <p><strong>Você pode:</strong></p>
-                      <p>• Visualizar todos os riscos cadastrados na base de dados</p>
-                      <p>• Sugerir alterações em riscos existentes</p>
-                      <p>• Propor novos riscos baseados em sua experiência</p>
-                      <p>• Melhorar descrições, mitigações e correções</p>
-                      <p className="pt-1 border-t border-green-200">
-                        <em>Suas sugestões são analisadas pela equipe técnica do CEA em até 15 dias úteis</em>
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-8 flex justify-end">
-                <button
-                  onClick={generateRisks}
-                  disabled={!isFormValid() || isGenerating}
-                  className="px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed flex items-center space-x-3 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                >
-                  {isGenerating ? (
-                    <>
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                      <span>Gerando Riscos...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="font-medium">Gerar Matriz de Risco</span>
-                      <ChevronRight className="w-5 h-5" />
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Step 2: Revisão de Riscos */}
-        {currentPage === 'form' && currentStep === 2 && (
-          <div className="space-y-6">
-            {/* Debug Info - Mostrar lógica de seleção ATUALIZADA */}
-            {debugInfo && (
-              <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
-                <h3 className="font-semibold text-blue-900 mb-3 flex items-center">
-                  <Info className="w-5 h-5 mr-2" />
-                  Lógica de Seleção Aplicada (Baseada nos Dados CEA + Porte)
-                </h3>
-                <div className="space-y-2 text-sm">
-                  <p><span className="font-medium">Tipo de Obra Base:</span> {debugInfo.tipo_obra_chave || 'Não identificado'}</p>
-                  <p><span className="font-medium">Porte do Empreendimento:</span> {debugInfo.tamanho_info?.categoria?.replace('_', ' ') || 'Não definido'}</p>
-                  {debugInfo.tamanho_info?.area && (
-                    <p><span className="font-medium">Área:</span> {debugInfo.tamanho_info.area} m²</p>
-                  )}
-                  <p><span className="font-medium">Riscos Adicionais:</span> {debugInfo.additional_risks.length} identificados</p>
-                  <p><span className="font-medium">Riscos Excluídos:</span> {debugInfo.excluded_risks.length} removidos</p>
-                  <div className="mt-3">
-                    <span className="font-medium">Critérios Aplicados:</span>
-                    <ul className="mt-1 space-y-1 ml-4">
-                      {debugInfo.debug_logic.map((logic, index) => (
-                        <li key={index} className="text-xs text-gray-600">• {logic}</li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-100">
-              <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 border-b">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-900 mb-1">Riscos Identificados</h2>
-                    <p className="text-gray-600">
-                      <span className="font-semibold text-blue-600">{selectedRisks.length}</span> riscos selecionados para: 
-                      <span className="font-medium"> {projectData.tipoIntervencao} de {projectData.tipoUnidade} - {projectData.forca}</span>
-                    </p>
-                    {debugInfo?.tamanho_info && (
-                      <p className="text-sm text-gray-500 mt-1">
-                        Porte: {debugInfo.tamanho_info.categoria.replace('_', ' ')} 
-                        {debugInfo.tamanho_info.area && ` (${debugInfo.tamanho_info.area} m²)`}
-                      </p>
-                    )}
-                  </div>
-                  <button
-                    onClick={generatePDF}
-                    disabled={isGenerating}
-                    className="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed flex items-center space-x-2 transition-all duration-200 shadow-lg hover:shadow-xl"
-                  >
-                    {isGenerating ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        <span>Gerando PDF...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Download className="w-4 h-4" />
-                        <span>Gerar PDF</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              <div className="p-6">
-                <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <Info className="w-4 h-4 text-blue-600" />
-                    <span className="font-medium text-gray-700">Legenda dos Níveis de Risco:</span>
-                  </div>
-                  <div className="flex flex-wrap gap-3 text-sm">
-                    <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full border border-red-200">Extremo (15-25)</span>
-                    <span className="px-3 py-1 bg-orange-100 text-orange-800 rounded-full border border-orange-200">Alto (8-12)</span>
-                    <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full border border-yellow-200">Moderado (3-6)</span>
-                    <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full border border-blue-200">Baixo (1-2)</span>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  {selectedRisks.length > 0 ? selectedRisks.map((risco) => (
-                    <div key={risco.id} className={`border-2 rounded-xl p-6 hover:shadow-lg transition-all duration-200 ${getRiskColor(risco.nivel_risco)}`}>
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex-1">
-                          <div className="flex flex-wrap items-center gap-2 mb-3">
-                            <span className="text-sm font-medium text-gray-500 bg-white px-2 py-1 rounded">#{risco.id}</span>
-                            <span className={`px-3 py-1 text-sm font-medium rounded-full border-2 ${getRiskColor(risco.nivel_risco)}`}>
-                              {getRiskLevelText(risco.classificacao, risco.nivel_risco)}
-                            </span>
-                            <span className="px-3 py-1 text-sm bg-gray-100 text-gray-800 rounded-full">
-                              {risco.fase}
-                            </span>
-                             <span className={`px-3 py-1 text-sm rounded-full ${
-                              risco.responsavel === 'Contratante' ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-orange-800'
-                             }`}>
-                              {risco.responsavel}
-                             </span>
-                          </div>
-                          <h3 className="font-semibold text-gray-900 mb-2 text-lg">{risco.evento}</h3>
-                          <p className="text-sm text-gray-700 mb-4 leading-relaxed">
-                            <span className="font-medium">Descrição:</span> {risco.descricao}
-                          </p>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                            <div className="p-3 bg-white bg-opacity-50 rounded-lg">
-                              <span className="font-medium text-gray-800 block mb-1">🛡️ Mitigação:</span>
-                              <p className="text-gray-700 leading-relaxed">{risco.mitigacao}</p>
-                            </div>
-                            <div className="p-3 bg-white bg-opacity-50 rounded-lg">
-                              <span className="font-medium text-gray-800 block mb-1">🔧 Correção:</span>
-                              <p className="text-gray-700 leading-relaxed">{risco.correcao}</p>
-                            </div>
-                          </div>
-                        </div>
-                        <button className="ml-4 p-2 text-gray-400 hover:text-gray-600 hover:bg-white rounded-lg transition-colors">
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-6 space-y-2 sm:space-y-0 text-sm border-t border-white border-opacity-50 pt-4">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-gray-600 font-medium">Probabilidade:</span>
-                          <div className="flex space-x-1">
-                            {[1, 2, 3, 4, 5].map((i) => (
-                              <div
-                                key={i}
-                                className={`w-3 h-3 rounded-full transition-colors ${
-                                  i <= risco.probabilidade ? 'bg-blue-500' : 'bg-gray-300'
-                                }`}
-                              />
-                            ))}
-                          </div>
-                          <span className="text-gray-800 font-semibold">{risco.probabilidade}/5</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-gray-600 font-medium">Impacto:</span>
-                          <div className="flex space-x-1">
-                            {[1, 2, 3, 4, 5].map((i) => (
-                              <div
-                                key={i}
-                                className={`w-3 h-3 rounded-full transition-colors ${
-                                  i <= risco.impacto_nivel ? 'bg-red-500' : 'bg-gray-300'
-                                }`}
-                              />
-                            ))}
-                          </div>
-                          <span className="text-gray-800 font-semibold">{risco.impacto_nivel}/5</span>
-                        </div>
-                      </div>
-                    </div>
-                  )) : (
-                    <div className="text-center py-12">
-                      <div className="p-4 bg-gray-100 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                        <AlertTriangle className="w-8 h-8 text-gray-400" />
-                      </div>
-                      <h3 className="font-medium text-gray-900 mb-2">Nenhum risco identificado</h3>
-                      <p className="text-gray-600">Nenhum risco foi selecionado para os critérios informados.</p>
-                    </div>
-                  )}
-                </div>
-
-                <div className="mt-8 flex flex-col sm:flex-row justify-between gap-4">
-                  <button
-                    onClick={() => setCurrentStep(1)}
-                    className="px-6 py-3 text-gray-600 border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200"
-                  >
-                    ← Voltar
-                  </button>
-                  <button
-                    onClick={generatePDF}
-                    disabled={selectedRisks.length === 0 || isGenerating}
-                    className="px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed flex items-center justify-center space-x-2 transition-all duration-200 shadow-lg hover:shadow-xl"
-                  >
-                    {isGenerating ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        <span>Gerando PDF...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Download className="w-4 h-4" />
-                        <span>Gerar Matriz em PDF</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Step 3: Geração PDF */}
-        {currentPage === 'form' && currentStep === 3 && (
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-12 text-center">
-            <div className="p-4 bg-green-100 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
-              <CheckCircle className="w-12 h-12 text-green-600" />
-            </div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">PDF Gerado com Sucesso!</h2>
-            <p className="text-gray-600 mb-8 max-w-lg mx-auto leading-relaxed">
-              Sua Matriz de Risco foi gerada e baixada com sucesso! O documento contém todos os {selectedRisks.length} riscos 
-              identificados para o projeto, baseado na análise de 557 obras do CEA e considerando o porte específico do empreendimento.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button
-                onClick={() => setCurrentStep(2)}
-                className="px-8 py-3 text-blue-600 border-2 border-blue-600 rounded-lg hover:bg-blue-50 transition-colors duration-200"
-              >
-                ← Revisar Riscos
-              </button>
-              <button
-                onClick={() => {
-                  setCurrentStep(1);
-                  setSelectedRisks([]);
-                  setDebugInfo(null);
-                  setProjectData({
-                    forca: '',
-                    tipoUnidade: '',
-                    tipoIntervencao: '',
-                    regimeExecucao: '',
-                    valor: '',
-                    caracteristicas: []
-                  });
-                }}
-                className="px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl"
-              >
-                🚀 Novo Projeto
-              </button>
-            </div>
-          </div>
-        )}
-      </main>
-    </div>
-  );
-};
-
-export default RiskMatrixApp;
