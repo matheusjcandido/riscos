@@ -1,4 +1,4 @@
-# api/index.py - Backend melhorado com padrões das Delegacias Cidadãs e geração de PDF
+# api/index.py - Backend sem funcionalidade de sugestões
 import os
 import json
 from datetime import datetime
@@ -666,7 +666,7 @@ def health_check():
     return jsonify({
         "status": "ok", 
         "message": "API de Riscos da SESP/PR CEA está operacional!",
-        "version": "3.2-CEA-DELEGACIAS-CORRIGIDA",
+        "version": "3.3-CEA-SEM-SUGESTOES",
         "features": [
             "advanced_risk_selection", 
             "debug_info", 
@@ -879,7 +879,7 @@ def get_cea_insights():
             "total_obras_analisadas": 557,
             "periodo_analise": "Histórico completo das obras do CEA",
             "data_atualizacao": "2025-05-29",
-            "nova_versao": "3.1 - Com padrões de Delegacias Cidadãs"
+            "nova_versao": "3.3 - Sistema sem funcionalidade de sugestões"
         },
         "distribuicao_forcas": {
             "corpo_bombeiros": {"obras": 161, "percentual": 28.9, "foco": "Segurança e emergência"},
@@ -994,62 +994,6 @@ def get_all_risks():
             "details": str(e)
         }), 500
 
-@app.route('/api/suggest-risk', methods=['POST'])
-def suggest_risk():
-    """Recebe sugestões de alterações ou inclusão de riscos."""
-    try:
-        sugestao_data = request.get_json()
-        
-        if not sugestao_data:
-            return jsonify({"error": "Nenhum dado de sugestão foi recebido."}), 400
-        
-        # Validar campos obrigatórios
-        campos_obrigatorios = ['tipo_sugestao', 'nome_sugerinte', 'email_sugerinte']
-        for campo in campos_obrigatorios:
-            if not sugestao_data.get(campo):
-                return jsonify({"error": f"Campo obrigatório ausente: {campo}"}), 400
-        
-        # Adicionar timestamp
-        sugestao_data['timestamp'] = datetime.now().isoformat()
-        sugestao_data['status'] = 'pendente'
-        
-        # Log da sugestão (em produção, salvar em banco de dados)
-        print("=== NOVA SUGESTÃO DE RISCO ===")
-        print(f"Tipo: {sugestao_data.get('tipo_sugestao')}")
-        print(f"Sugerinte: {sugestao_data.get('nome_sugerinte')} ({sugestao_data.get('email_sugerinte')})")
-        print(f"Timestamp: {sugestao_data.get('timestamp')}")
-        
-        if sugestao_data.get('tipo_sugestao') == 'alteracao':
-            print(f"Risco ID: {sugestao_data.get('risco_id')}")
-            print(f"Alteração: {sugestao_data.get('descricao_alteracao')}")
-        elif sugestao_data.get('tipo_sugestao') == 'novo_risco':
-            print(f"Novo Evento: {sugestao_data.get('novo_evento')}")
-            print(f"Nova Descrição: {sugestao_data.get('nova_descricao')}")
-        
-        print("================================")
-        
-        # Em produção, aqui você salvaria no banco de dados
-        # Por enquanto, apenas confirmamos o recebimento
-        
-        return jsonify({
-            "message": "Sugestão recebida com sucesso!",
-            "status": "success",
-            "timestamp": sugestao_data['timestamp'],
-            "id_interno": f"SUG_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-            "proximos_passos": [
-                "Sua sugestão será analisada pela equipe técnica do CEA",
-                "Você receberá um retorno por email em até 15 dias úteis",
-                "Sugestões aprovadas serão incluídas na próxima versão da base de dados"
-            ]
-        }), 200
-        
-    except Exception as e:
-        print(f"Erro ao processar sugestão: {e}")
-        return jsonify({
-            "error": "Erro interno ao processar sugestão.",
-            "details": str(e)
-        }), 500
-
 # Endpoint para estatísticas baseadas no CEA + tamanhos
 @app.route('/api/statistics', methods=['GET'])
 def get_statistics():
@@ -1126,11 +1070,12 @@ def get_statistics():
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5001))
-    print("=== INICIANDO API COM PADRÕES DE DELEGACIAS + TAMANHOS (CORRIGIDA) ===")
+    print("=== INICIANDO API SEM FUNCIONALIDADE DE SUGESTÕES ===")
     print("Base de dados: 557 obras analisadas")
     print("Padrões de Delegacias: IA, I, II, III")
     print("Polícia Penal: Casa de Custódia, Penitenciária") 
     print("Polícia Científica: UETC Básica, Intermediária, Posto Avançado")
     print("CBMPR/PMPR: Pelotão, Companhia, Batalhão, Comando Regional (pequeno)")
-    print("Versão: 3.2-CEA-DELEGACIAS-CORRIGIDA")
+    print("Versão: 3.3-CEA-SEM-SUGESTOES")
+    print("FUNCIONALIDADE DE SUGESTÕES REMOVIDA")
     app.run(host='0.0.0.0', port=port, debug=True)
