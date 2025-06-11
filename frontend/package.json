@@ -1,8 +1,8 @@
 {
   "name": "risk-matrix-frontend",
-  "version": "3.2.0",
+  "version": "3.3.0",
   "private": true,
-  "description": "Sistema de Matriz de Risco - SESP/PR CEA",
+  "description": "Sistema de Matriz de Risco - SESP/PR CEA (Sem Funcionalidade de Sugestões)",
   "dependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
