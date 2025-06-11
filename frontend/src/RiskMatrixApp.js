@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronRight, Download, Edit2, AlertTriangle, CheckCircle, Building2, DollarSign, Settings, Info, FileText, Database, Plus, ArrowLeft, Send, Eye } from 'lucide-react';
+import { ChevronRight, Download, AlertTriangle, CheckCircle, Building2, DollarSign, Settings, Info, FileText, Database, ArrowLeft, Eye } from 'lucide-react';
 
 // Constantes baseadas na análise dos dados do CEA
 const forcas = [
@@ -144,7 +144,7 @@ const getApiUrl = () => {
 
 const RiskMatrixApp = () => {
   const [currentStep, setCurrentStep] = useState(1);
-  const [currentPage, setCurrentPage] = useState('form'); // 'form', 'all-risks', 'suggest'
+  const [currentPage, setCurrentPage] = useState('form'); // 'form', 'all-risks'
   const [projectData, setProjectData] = useState({
     forca: '',
     tipoUnidade: '',
@@ -157,28 +157,13 @@ const RiskMatrixApp = () => {
   const [selectedRiskIds, setSelectedRiskIds] = useState(new Set());
   const [allRisks, setAllRisks] = useState(null);
   const [allRisksStats, setAllRisksStats] = useState(null);
-  const [selectedRiskForSuggestion, setSelectedRiskForSuggestion] = useState(null);
-  const [suggestionForm, setSuggestionForm] = useState({
-    tipo_sugestao: '',
-    nome_sugerinte: '',
-    email_sugerinte: '',
-    risco_id: '',
-    descricao_alteracao: '',
-    novo_evento: '',
-    nova_descricao: '',
-    nova_mitigacao: '',
-    nova_correcao: '',
-    justificativa: ''
-  });
   const [isGenerating, setIsGenerating] = useState(false);
   const [isLoadingAllRisks, setIsLoadingAllRisks] = useState(false);
-  const [isSendingSuggestion, setIsSendingSuggestion] = useState(false);
   const [error, setError] = useState(null);
   const [debugInfo, setDebugInfo] = useState(null);
-  const [suggestionSuccess, setSuggestionSuccess] = useState(null);
 
   // Componente para exibir risco expandido com mitigação e contingência
-  const RiscoExpandido = ({ risco, openSuggestionForm, getRiskColor, getRiskLevelText }) => {
+  const RiscoExpandido = ({ risco, getRiskColor, getRiskLevelText }) => {
     const [isExpanded, setIsExpanded] = useState(false);
 
     return (
@@ -281,14 +266,6 @@ const RiskMatrixApp = () => {
                 </div>
               )}
             </div>
-            
-            <button 
-              onClick={() => openSuggestionForm(risco)}
-              className="ml-4 p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex-shrink-0"
-              title="Sugerir alteração para este risco"
-            >
-              <Edit2 className="w-4 h-4" />
-            </button>
           </div>
         </div>
       </div>
@@ -738,79 +715,11 @@ const RiskMatrixApp = () => {
     }
   };
 
-  // Função para enviar sugestão
-  const sendSuggestion = async () => {
-    setIsSendingSuggestion(true);
-    setError(null);
-    
-    try {
-      const response = await fetch(`${getApiUrl()}/api/suggest-risk`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(suggestionForm),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Erro da API: ${response.status} ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      
-      if (data.error) {
-        setError(`Erro do servidor: ${data.error}`);
-      } else {
-        setSuggestionSuccess(data);
-        // Limpar formulário
-        setSuggestionForm({
-          tipo_sugestao: '',
-          nome_sugerinte: '',
-          email_sugerinte: '',
-          risco_id: '',
-          descricao_alteracao: '',
-          novo_evento: '',
-          nova_descricao: '',
-          nova_mitigacao: '',
-          nova_correcao: '',
-          justificativa: ''
-        });
-        setSelectedRiskForSuggestion(null);
-      }
-    } catch (error) {
-      console.error('Erro ao enviar sugestão:', error);
-      setError('Falha ao enviar sugestão. Tente novamente.');
-    } finally {
-      setIsSendingSuggestion(false);
-    }
-  };
-
-  // Função para abrir formulário de sugestão para um risco específico
-  const openSuggestionForm = (risco = null) => {
-    if (risco) {
-      setSelectedRiskForSuggestion(risco);
-      setSuggestionForm(prev => ({
-        ...prev,
-        tipo_sugestao: 'alteracao',
-        risco_id: risco.id.toString()
-      }));
-    } else {
-      setSelectedRiskForSuggestion(null);
-      setSuggestionForm(prev => ({
-        ...prev,
-        tipo_sugestao: 'novo_risco',
-        risco_id: ''
-      }));
-    }
-    setCurrentPage('suggest');
-  };
-
   // Função para voltar à página inicial
   const goToHome = () => {
     setCurrentPage('form');
     setCurrentStep(1);
     setError(null);
-    setSuggestionSuccess(null);
   };
 
   // Função para formatar valores monetários
@@ -874,19 +783,6 @@ const RiskMatrixApp = () => {
                 )}
                 <span className="hidden md:block text-sm">Todos os Riscos</span>
               </button>
-              
-              <button
-                onClick={() => openSuggestionForm()}
-                className={`p-3 rounded-lg transition-all duration-200 flex items-center space-x-2 ${
-                  currentPage === 'suggest' 
-                    ? 'bg-white bg-opacity-20 text-white' 
-                    : 'bg-white bg-opacity-10 text-blue-200 hover:bg-white hover:bg-opacity-20 hover:text-white'
-                }`}
-                title="Sugerir melhorias"
-              >
-                <Plus className="w-5 h-5" />
-                <span className="hidden md:block text-sm">Sugerir</span>
-              </button>
             </div>
           </div>
         </div>
@@ -914,28 +810,6 @@ const RiskMatrixApp = () => {
           </div>
         )}
 
-        {/* Success Display para sugestões */}
-        {suggestionSuccess && (
-          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl shadow-sm">
-            <div className="flex items-center">
-              <div className="p-2 bg-green-100 rounded-lg mr-3">
-                <CheckCircle className="w-5 h-5 text-green-600" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-medium text-green-800">Sugestão enviada com sucesso!</h3>
-                <p className="text-green-700 text-sm">{suggestionSuccess.message}</p>
-                <p className="text-green-600 text-xs mt-1">ID: {suggestionSuccess.id_interno}</p>
-              </div>
-              <button 
-                onClick={() => setSuggestionSuccess(null)}
-                className="text-green-400 hover:text-green-600 ml-2"
-              >
-                ×
-              </button>
-            </div>
-          </div>
-        )}
-
         {/* Página: Ver Todos os Riscos */}
         {currentPage === 'all-risks' && allRisks && (
           <div className="bg-white rounded-2xl shadow-xl border border-gray-100">
@@ -950,13 +824,6 @@ const RiskMatrixApp = () => {
                     Total de <span className="font-semibold text-purple-600">{allRisksStats?.total_riscos || 0}</span> riscos organizados por fase cronológica do projeto
                   </p>
                 </div>
-                <button
-                  onClick={() => openSuggestionForm()}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Sugerir Novo</span>
-                </button>
               </div>
             </div>
 
@@ -1042,7 +909,7 @@ const RiskMatrixApp = () => {
                         </div>
                         <div className="divide-y divide-gray-100">
                           {riscos.map((risco) => (
-                            <RiscoExpandido key={risco.id} risco={risco} openSuggestionForm={openSuggestionForm} getRiskColor={getRiskColor} getRiskLevelText={getRiskLevelText} />
+                            <RiscoExpandido key={risco.id} risco={risco} getRiskColor={getRiskColor} getRiskLevelText={getRiskLevelText} />
                           ))}
                         </div>
                       </div>
@@ -1050,246 +917,6 @@ const RiskMatrixApp = () => {
                   });
                 })()}
               </div>
-            </div>
-          </div>
-        )}
-
-        {/* Página: Sugerir Melhorias */}
-        {currentPage === 'suggest' && (
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-100">
-            <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 border-b">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900 flex items-center">
-                    <Send className="w-6 h-6 mr-3 text-green-600" />
-                    Sugerir Melhorias
-                  </h2>
-                  <p className="text-gray-600 mt-1">
-                    {selectedRiskForSuggestion 
-                      ? `Sugerindo alteração para o risco #${selectedRiskForSuggestion.id}`
-                      : 'Contribua com a base de dados sugerindo novos riscos ou melhorias'
-                    }
-                  </p>
-                </div>
-                <button
-                  onClick={goToHome}
-                  className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center space-x-2"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  <span>Voltar</span>
-                </button>
-              </div>
-            </div>
-
-            <div className="p-6">
-              <form className="space-y-6" onSubmit={(e) => {
-                e.preventDefault();
-                if (suggestionForm.nome_sugerinte && suggestionForm.email_sugerinte && suggestionForm.tipo_sugestao) {
-                  sendSuggestion();
-                }
-              }}>
-                {/* Tipo de sugestão */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de Sugestão *</label>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <label className="flex items-center p-4 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                      <input
-                        type="radio"
-                        name="tipo_sugestao"
-                        value="alteracao"
-                        checked={suggestionForm.tipo_sugestao === 'alteracao'}
-                        onChange={(e) => setSuggestionForm(prev => ({ ...prev, tipo_sugestao: e.target.value }))}
-                        className="mr-3"
-                      />
-                      <div>
-                        <div className="font-medium text-gray-900">Alterar Risco Existente</div>
-                        <div className="text-sm text-gray-600">Sugerir melhorias em um risco já cadastrado</div>
-                      </div>
-                    </label>
-                    <label className="flex items-center p-4 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                      <input
-                        type="radio"
-                        name="tipo_sugestao"
-                        value="novo_risco"
-                        checked={suggestionForm.tipo_sugestao === 'novo_risco'}
-                        onChange={(e) => setSuggestionForm(prev => ({ ...prev, tipo_sugestao: e.target.value }))}
-                        className="mr-3"
-                      />
-                      <div>
-                        <div className="font-medium text-gray-900">Novo Risco</div>
-                        <div className="text-sm text-gray-600">Propor um risco não cadastrado na base</div>
-                      </div>
-                    </label>
-                  </div>
-                </div>
-
-                {/* Dados pessoais */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Nome Completo *</label>
-                    <input
-                      type="text"
-                      value={suggestionForm.nome_sugerinte}
-                      onChange={(e) => setSuggestionForm(prev => ({ ...prev, nome_sugerinte: e.target.value }))}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                      placeholder="Seu nome completo"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
-                    <input
-                      type="email"
-                      value={suggestionForm.email_sugerinte}
-                      onChange={(e) => setSuggestionForm(prev => ({ ...prev, email_sugerinte: e.target.value }))}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                      placeholder="seu.email@example.com"
-                      required
-                    />
-                  </div>
-                </div>
-
-                {/* Campos específicos para alteração */}
-                {suggestionForm.tipo_sugestao === 'alteracao' && (
-                  <>
-                    {selectedRiskForSuggestion && (
-                      <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                        <h4 className="font-medium text-blue-900 mb-2">Risco Selecionado:</h4>
-                        <p className="text-sm text-blue-800">#{selectedRiskForSuggestion.id} - {selectedRiskForSuggestion.evento}</p>
-                      </div>
-                    )}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        {selectedRiskForSuggestion ? 'Descrição da Alteração Sugerida *' : 'ID do Risco *'}
-                      </label>
-                      {selectedRiskForSuggestion ? (
-                        <textarea
-                          value={suggestionForm.descricao_alteracao}
-                          onChange={(e) => setSuggestionForm(prev => ({ ...prev, descricao_alteracao: e.target.value }))}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                          rows="4"
-                          placeholder="Descreva as alterações que você sugere para este risco..."
-                          required
-                        />
-                      ) : (
-                        <input
-                          type="number"
-                          value={suggestionForm.risco_id}
-                          onChange={(e) => setSuggestionForm(prev => ({ ...prev, risco_id: e.target.value }))}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                          placeholder="Digite o ID do risco (ex: 15)"
-                          required
-                        />
-                      )}
-                    </div>
-                  </>
-                )}
-
-                {/* Campos específicos para novo risco */}
-                {suggestionForm.tipo_sugestao === 'novo_risco' && (
-                  <>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Evento do Novo Risco *</label>
-                      <input
-                        type="text"
-                        value={suggestionForm.novo_evento}
-                        onChange={(e) => setSuggestionForm(prev => ({ ...prev, novo_evento: e.target.value }))}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                        placeholder="Ex: Falhas na integração de sistemas de monitoramento"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Descrição do Risco *</label>
-                      <textarea
-                        value={suggestionForm.nova_descricao}
-                        onChange={(e) => setSuggestionForm(prev => ({ ...prev, nova_descricao: e.target.value }))}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                        rows="4"
-                        placeholder="Descreva detalhadamente o risco, suas causas e contexto..."
-                        required
-                      />
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Mitigação Sugerida</label>
-                        <textarea
-                          value={suggestionForm.nova_mitigacao}
-                          onChange={(e) => setSuggestionForm(prev => ({ ...prev, nova_mitigacao: e.target.value }))}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                          rows="3"
-                          placeholder="Como prevenir ou reduzir este risco..."
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Correção Sugerida</label>
-                        <textarea
-                          value={suggestionForm.nova_correcao}
-                          onChange={(e) => setSuggestionForm(prev => ({ ...prev, nova_correcao: e.target.value }))}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                          rows="3"
-                          placeholder="Como corrigir se o risco ocorrer..."
-                        />
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {/* Justificativa */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Justificativa</label>
-                  <textarea
-                    value={suggestionForm.justificativa}
-                    onChange={(e) => setSuggestionForm(prev => ({ ...prev, justificativa: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    rows="3"
-                    placeholder="Explique o motivo da sua sugestão, experiências relevantes, referências..."
-                  />
-                </div>
-
-                {/* Botões */}
-                <div className="flex flex-col sm:flex-row justify-between gap-4">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCurrentPage('form');
-                      setSuggestionForm({
-                        tipo_sugestao: '',
-                        nome_sugerinte: '',
-                        email_sugerinte: '',
-                        risco_id: '',
-                        descricao_alteracao: '',
-                        novo_evento: '',
-                        nova_descricao: '',
-                        nova_mitigacao: '',
-                        nova_correcao: '',
-                        justificativa: ''
-                      });
-                      setSelectedRiskForSuggestion(null);
-                    }}
-                    className="px-6 py-3 text-gray-600 border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={!suggestionForm.nome_sugerinte || !suggestionForm.email_sugerinte || !suggestionForm.tipo_sugestao || isSendingSuggestion}
-                    className="px-8 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed flex items-center justify-center space-x-2 transition-all duration-200"
-                  >
-                    {isSendingSuggestion ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        <span>Enviando...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Send className="w-4 h-4" />
-                        <span>Enviar Sugestão</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </form>
             </div>
           </div>
         )}
@@ -1716,25 +1343,6 @@ const RiskMatrixApp = () => {
                       <p className="pt-1 border-t border-blue-200"><em>Resultado: Lista personalizada considerando o porte e complexidade do empreendimento</em></p>
                     </div>
                   </div>
-
-                  {/* Seção sobre contribuições */}
-                  <div className="bg-green-50 rounded-xl p-6 border border-green-200">
-                    <h4 className="font-semibold text-green-900 mb-3 flex items-center">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Contribua com a Base de Dados
-                    </h4>
-                    <div className="space-y-2 text-xs text-green-800">
-                      <p>Nossa base de riscos é constantemente atualizada com a contribuição de especialistas.</p>
-                      <p><strong>Você pode:</strong></p>
-                      <p>• Visualizar todos os riscos cadastrados na base de dados</p>
-                      <p>• Sugerir alterações em riscos existentes</p>
-                      <p>• Propor novos riscos baseados em sua experiência</p>
-                      <p>• Melhorar descrições, mitigações e correções</p>
-                      <p className="pt-1 border-t border-green-200">
-                        <em>Suas sugestões são analisadas pela equipe técnica do CEA em até 15 dias úteis</em>
-                      </p>
-                    </div>
-                  </div>
                 </div>
               </div>
 
@@ -1893,7 +1501,7 @@ const RiskMatrixApp = () => {
                           </div>
                         </div>
                         
-                        {/* Checkbox e botão de edição */}
+                        {/* Checkbox */}
                         <div className="ml-4 flex flex-col items-center space-y-2">
                           <label className="flex items-center cursor-pointer">
                             <input
@@ -1906,13 +1514,6 @@ const RiskMatrixApp = () => {
                               {selectedRiskIds.has(risco.id) ? 'Incluir' : 'Excluir'}
                             </span>
                           </label>
-                          <button 
-                            onClick={() => openSuggestionForm(risco)}
-                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                            title="Sugerir alteração para este risco"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
                         </div>
                       </div>
                       <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-6 space-y-2 sm:space-y-0 text-sm border-t border-white border-opacity-50 pt-4">
