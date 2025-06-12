@@ -17,19 +17,6 @@
           "Nova categoria: Conformidade e Proteção de Dados",
           "Características especiais expandidas para supervisão técnica"
         ],
-        "v5.0": [
-          "Removidos 7 riscos não pertinentes a obras públicas (TI/gestão organizacional)",
-          "Reordenação cronológica completa dos IDs por fase do projeto",
-          "Foco exclusivo em riscos de execução de obras públicas",
-          "IDs reorganizados de 1-78 seguindo sequência temporal do projeto"
-        ],
-        "v4.0": [
-          "Adicionados 5 novos riscos específicos (IDs 81-85)",
-          "Melhorados critérios climáticos com base em média histórica",
-          "Refinadas responsabilidades para riscos geotécnicos",
-          "Nova categoria: Riscos de Garantia e Manutenção",
-          "Critérios mais objetivos para delegacias padrão"
-        ]
       }
     },
     "escala_probabilidade": {
