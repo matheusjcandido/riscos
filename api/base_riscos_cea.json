@@ -2,13 +2,21 @@
   "base_riscos_cea": {
     "metadata": {
       "orgao": "Centro de Engenharia e Arquitetura - Secretaria de Segurança Pública do Paraná",
-      "versao": "5.0",
-      "total_riscos": 78,
+      "versao": "6.0",
+      "total_riscos": 88,
       "data_criacao": "2025-05-26",
-      "data_atualizacao": "2025-06-06",
-      "features": ["advanced_selection", "regime_execucao", "debug_info", "fase_completa", "pos_entrega_risks", "criterios_climaticos_objetivos", "responsabilidades_hibridas", "cronological_ordering"],
-      "fonte_melhorias": "Matriz de Risco Delegacia Cidadã Padrão IA - Porecatu/PR",
+      "data_atualizacao": "2025-06-12",
+      "features": ["advanced_selection", "regime_execucao", "debug_info", "fase_completa", "pos_entrega_risks", "criterios_climaticos_objetivos", "responsabilidades_hibridas", "cronological_ordering", "gestao_contratual_avancada", "conformidade_lgpd"],
+      "fonte_melhorias": "Matriz de Risco Delegacia Cidadã Padrão IA - Porecatu/PR + Mapa de Riscos Paraná Projetos",
       "changelog": {
+        "v6.0": [
+          "Adicionados 10 novos riscos de gestão jurídico-administrativa (IDs 79-88)",
+          "Incorporadas melhorias do mapa de riscos Paraná Projetos",
+          "Fortalecimento em conformidade LGPD e aspectos contratuais",
+          "Aprimorados riscos 15, 50 e 69 com base em lições aprendidas",
+          "Nova categoria: Conformidade e Proteção de Dados",
+          "Características especiais expandidas para supervisão técnica"
+        ],
         "v5.0": [
           "Removidos 7 riscos não pertinentes a obras públicas (TI/gestão organizacional)",
           "Reordenação cronológica completa dos IDs por fase do projeto",
@@ -61,19 +69,19 @@
       "empreitada_unitario": {
         "nome": "Empreitada por preço unitário",
         "descricao": "Contratação com pagamento por medições de itens executados", 
-        "riscos_especificos": [40, 53, 64, 17, 73, 74],
+        "riscos_especificos": [40, 53, 64, 17, 73, 74, 82],
         "riscos_reduzidos": []
       },
       "contratacao_integrada": {
         "nome": "Contratação integrada",
         "descricao": "Contratação que inclui elaboração e execução de projetos",
-        "riscos_especificos": [1, 11, 22, 50, 15, 16, 75],
+        "riscos_especificos": [1, 11, 22, 50, 15, 16, 75, 88],
         "riscos_reduzidos": []
       },
       "empreitada_integral": {
         "nome": "Empreitada integral", 
         "descricao": "Contratação de todas as etapas da obra",
-        "riscos_especificos": [1, 29, 44, 54, 15, 69, 71, 75],
+        "riscos_especificos": [1, 29, 44, 54, 15, 69, 71, 75, 88],
         "riscos_reduzidos": []
       },
       "tarefa": {
@@ -107,33 +115,33 @@
       "ate_100k": {
         "descricao": "Até R$ 100.000",
         "riscos_especificos": [],
-        "riscos_reduzidos": [1, 13, 22, 50, 15, 5, 71, 75]
+        "riscos_reduzidos": [1, 13, 22, 50, 15, 5, 71, 75, 80, 82]
       },
       "100k_500k": {
         "descricao": "R$ 100.001 a R$ 500.000",
-        "riscos_especificos": [60, 77, 72],
+        "riscos_especificos": [60, 77, 72, 85],
         "riscos_reduzidos": []
       },
       "500k_1m": {
         "descricao": "R$ 500.001 a R$ 1.000.000",
-        "riscos_especificos": [57, 61, 73],
+        "riscos_especificos": [57, 61, 73, 82],
         "riscos_reduzidos": []
       },
       "1m_5m": {
         "descricao": "R$ 1.000.001 a R$ 5.000.000",
-        "riscos_especificos": [22, 50, 5, 62, 18, 73, 74],
+        "riscos_especificos": [22, 50, 5, 62, 18, 73, 74, 80, 84],
         "riscos_reduzidos": []
       },
       "acima_5m": {
         "descricao": "Acima de R$ 5.000.000",
-        "riscos_especificos": [1, 13, 29, 22, 50, 25, 15, 5, 76, 77, 78, 71, 73, 74, 75],
+        "riscos_especificos": [1, 13, 29, 22, 50, 25, 15, 5, 76, 77, 78, 71, 73, 74, 75, 80, 82, 84, 86],
         "riscos_reduzidos": []
       }
     },
     "caracteristicas_especiais": {
       "obra_funcionamento": {
         "nome": "Obra em unidade em funcionamento",
-        "riscos_especificos": [41, 51, 59, 68, 72],
+        "riscos_especificos": [41, 51, 59, 68, 72, 84],
         "riscos_reduzidos": []
       },
       "licenciamento_ambiental": {
@@ -143,12 +151,12 @@
       },
       "alta_seguranca": {
         "nome": "Área de segurança máxima",
-        "riscos_especificos": [30, 32, 33, 35, 7, 9, 58, 71, 72],
+        "riscos_especificos": [30, 32, 33, 35, 7, 9, 58, 71, 72, 84],
         "riscos_reduzidos": []
       },
       "integracao_sistemas": {
         "nome": "Integração com sistemas existentes", 
-        "riscos_especificos": [34, 45, 47, 56, 65, 70, 75],
+        "riscos_especificos": [34, 45, 47, 56, 65, 70, 75, 84, 88],
         "riscos_reduzidos": []
       },
       "demolicao": {
@@ -158,36 +166,51 @@
       },
       "instalacoes_especiais": {
         "nome": "Instalações especiais (blindagem, etc.)",
-        "riscos_especificos": [11, 35, 38, 63, 9, 72],
+        "riscos_especificos": [11, 35, 38, 63, 9, 72, 86],
         "riscos_reduzidos": []
       },
       "garantia_estendida": {
         "nome": "Obra com período de garantia estendido",
         "riscos_especificos": [71, 72],
         "riscos_reduzidos": []
+      },
+      "supervisao_tecnica": {
+        "nome": "Contratos com supervisão técnica especializada",
+        "riscos_especificos": [82, 86, 87, 88],
+        "riscos_reduzidos": [15, 50, 69]
+      },
+      "integracao_legados": {
+        "nome": "Integração com sistemas de segurança existentes",
+        "riscos_especificos": [45, 84, 88],
+        "riscos_reduzidos": []
+      },
+      "conformidade_dados": {
+        "nome": "Obras com tratamento intensivo de dados pessoais",
+        "riscos_especificos": [84, 86],
+        "riscos_reduzidos": []
       }
     },
     "tipos_obra": {
       "presidios": {
-        "riscos_especificos": [1, 29, 30, 32, 33, 34, 35, 41, 49, 58, 7, 9, 71, 72],
+        "riscos_especificos": [1, 29, 30, 32, 33, 34, 35, 41, 49, 58, 7, 9, 71, 72, 84],
         "descricao": "Estabelecimentos penais com requisitos de alta segurança",
         "peso_seguranca": 5,
         "complexidade_base": 4
       },
       "delegacias": {
-        "riscos_especificos": [1, 11, 34, 36, 37, 2, 43, 50, 59, 65, 70, 71, 72, 73, 74, 75],
+        "riscos_especificos": [1, 11, 34, 36, 37, 2, 43, 50, 59, 65, 70, 71, 72, 73, 74, 75, 84, 86],
         "descricao": "Unidades policiais com necessidades de segurança moderada a alta",
         "peso_seguranca": 3,
         "complexidade_base": 3
       },
       "quarteis": {
-        "riscos_especificos": [1, 36, 37, 2, 43, 56, 50, 57, 65, 18, 72, 75],
+        "riscos_especificos": [1, 36, 37, 2, 43, 56, 50, 57, 65, 18, 72, 75, 84],
         "descricao": "Instalações militares com requisitos específicos", 
         "peso_seguranca": 3,
         "complexidade_base": 3
       },
       "centrais_operacionais": {
-        "riscos_especificos": [11, 34, 36, 37, 45, 52, 58, 65, 77, 72, 74, 75],
+        "riscos_especificos": [11, 34, 36, 37, 45, 52, 58, 65, 77, 72, 74, 75, 84, 88],
         "descricao": "Centrais de comando e controle",
         "peso_seguranca": 4,
         "complexidade_base": 4
@@ -207,27 +230,27 @@
         "evento": "Definição inadequada do Programa de Necessidades para unidade de segurança",
         "descricao": "Ausência de levantamento claro das necessidades reais da força de segurança, características básicas mal definidas (finalidade, usuários, dimensões, requisitos de segurança)",
         "impacto": "Obra inadequada às demandas operacionais, subutilização, necessidade de adaptações custosas, abandono do empreendimento",
-        "probabilidade": 2,
+        "probabilidade": 3,
         "impacto_nivel": 3,
-        "nivel_risco": 6,
+        "nivel_risco": 9,
         "classificacao": "Moderado",
         "responsavel": "Contratante",
-        "mitigacao": "Workshops com stakeholders, consultas às forças, benchmarking com projetos similares, documento formal validado",
-        "correcao": "Revisão e revalidação do programa de necessidades, ajustes de escopo"
+        "mitigacao": "Workshops com stakeholders, consultas às forças, benchmarking com projetos similares, documento formal validado, matriz de rastreabilidade de requisitos",
+        "correcao": "Revisão e revalidação do programa de necessidades, ajustes de escopo, workshop de validação com usuários finais"
       },
       {
         "id": 2,
         "fase": "Preliminar à Licitação",
         "categoria": "Estudos Preliminares",
         "evento": "Análise inadequada do terreno para obras de segurança",
-        "descricao": "Não consideração de aspectos como linhas de visada, perímetros, acessos controlados",
+        "descricao": "Não consideração de aspectos como linhas de visada, perímetros, acessos controlados, análise de vulnerabilidades táticas",
         "impacto": "Projeto inadequado para função de segurança, necessidade de relocação",
         "probabilidade": 2,
         "impacto_nivel": 4,
         "nivel_risco": 8,
         "classificacao": "Alto",
         "responsavel": "Contratante",
-        "mitigacao": "Estudos específicos de segurança, análise de ameaças, consultoria especializada",
+        "mitigacao": "Estudos específicos de segurança, análise de ameaças, consultoria especializada, simulação de cenários operacionais",
         "correcao": "Revisão do projeto com adequação ao terreno"
       },
       {
@@ -242,8 +265,8 @@
         "nivel_risco": 6,
         "classificacao": "Moderado",
         "responsavel": "Contratante",
-        "mitigacao": "Levantamento cadastral detalhado, estimativa de indenizações, cronograma realista",
-        "correcao": "Recursos adicionais, assessoria jurídica especializada"
+        "mitigacao": "Levantamento cadastral detalhado, estimativa de indenizações, cronograma realista, mapeamento de stakeholders afetados",
+        "correcao": "Recursos adicionais, assessoria jurídica especializada, plano de comunicação social"
       },
       {
         "id": 4,
@@ -253,11 +276,11 @@
         "descricao": "Não identificação de exigências de licenças ambientais antes da licitação",
         "impacto": "Impossibilidade de licitar, atrasos imprevisíveis, multas ambientais, embargo",
         "probabilidade": 2,
-        "impacto_nivel": 3,
-        "nivel_risco": 6,
-        "classificacao": "Moderado",
+        "impacto_nivel": 4,
+        "nivel_risco": 8,
+        "classificacao": "Alto",
         "responsavel": "Contratante",
-        "mitigacao": "Consulta formal aos órgãos ambientais, especialistas na equipe, prazos realistas",
+        "mitigacao": "Consulta formal aos órgãos ambientais, especialistas na equipe, prazos realistas, matriz de licenças por tipo de obra",
         "correcao": "Início urgente do licenciamento, suspensão de outros planejamentos"
       },
       {
@@ -272,7 +295,7 @@
         "nivel_risco": 6,
         "classificacao": "Moderado",
         "responsavel": "Contratante",
-        "mitigacao": "Estimativa de custos operacionais no estudo de viabilidade, análise de fontes de receita",
+        "mitigacao": "Estimativa de custos operacionais no estudo de viabilidade, análise de fontes de receita, análise de ciclo de vida completo, benchmarking de custos operacionais similares",
         "correcao": "Busca de fontes para operação, redimensionamento do projeto"
       },
       {
@@ -362,7 +385,7 @@
         "nivel_risco": 8,
         "classificacao": "Alto",
         "responsavel": "Contratante",
-        "mitigacao": "Consulta a especialistas, estudo de tecnologias atuais, benchmarking",
+        "mitigacao": "Consulta a especialistas, estudo de tecnologias atuais, benchmarking, análise de ameaças específicas, prova de conceito obrigatória",
         "correcao": "Revisão das especificações com consultoria especializada"
       },
       {
@@ -377,7 +400,7 @@
         "nivel_risco": 6,
         "classificacao": "Moderado",
         "responsavel": "Contratante", 
-        "mitigacao": "Validação com especialistas, consulta a fornecedores especializados",
+        "mitigacao": "Validação com especialistas, consulta a fornecedores especializados, validação por benchmarking, dimensionamento por capacidade operacional",
         "correcao": "Readequação e republicação do processo licitatório"
       },
       {
@@ -387,12 +410,12 @@
         "evento": "Desconhecimento de normas específicas do sistema penitenciário",
         "descricao": "Não observância de normas do DEPEN, resoluções do CNPCP e diretrizes específicas",
         "impacto": "Obra não aprovada pelos órgãos reguladores, necessidade de adequações posteriores",
-        "probabilidade": 2,
+        "probabilidade": 3,
         "impacto_nivel": 4,
-        "nivel_risco": 8,
+        "nivel_risco": 12,
         "classificacao": "Alto",
         "responsavel": "Contratante",
-        "mitigacao": "Estudo da legislação específica, consulta ao DEPEN, análise de projetos aprovados",
+        "mitigacao": "Estudo da legislação específica, consulta ao DEPEN, análise de projetos aprovados, checklist de conformidade normativa, validação prévia com DEPEN",
         "correcao": "Adequação do projeto às normas específicas"
       },
       {
@@ -415,14 +438,14 @@
         "fase": "Planejamento da Contratação",
         "categoria": "Técnico e de Engenharia",
         "evento": "Projeto Básico deficiente para obras de segurança",
-        "descricao": "Ausência de elementos técnicos específicos para caracterizar obra de segurança, omissão de soluções críticas",
+        "descricao": "Ausência de elementos técnicos específicos para caracterizar obra de segurança, omissão de soluções críticas, falta de especificações para integração entre sistemas, ausência de detalhamento de interfaces de comunicação",
         "impacto": "Propostas imprecisas, necessidade de aditivos frequentes, disputas contratuais, qualidade comprometida",
         "probabilidade": 3,
         "impacto_nivel": 3,
         "nivel_risco": 9,
         "classificacao": "Moderado",
         "responsavel": "Contratante",
-        "mitigacao": "Checklist rigoroso, projetistas experientes, revisão por equipe independente",
+        "mitigacao": "Checklist rigoroso, projetistas experientes, revisão por equipe independente, revisão cruzada entre disciplinas, validação por usuários finais dos sistemas",
         "correcao": "Suspensão para correção integral do projeto básico"
       },
       {
@@ -482,7 +505,7 @@
         "nivel_risco": 9,
         "classificacao": "Moderado",
         "responsavel": "Contratante",
-        "mitigacao": "Elaboração técnica cuidadosa, consulta prévia ao mercado, especificações abertas",
+        "mitigacao": "Elaboração técnica cuidadosa, consulta prévia ao mercado, especificações abertas, audiência pública prévia",
         "correcao": "Análise técnica das impugnações e adequação quando procedente"
       },
       {
@@ -497,7 +520,7 @@
         "nivel_risco": 9,
         "classificacao": "Moderado",
         "responsavel": "Contratante",
-        "mitigacao": "Pesquisa ampla de mercado, consulta a associações setoriais, prazos adequados",
+        "mitigacao": "Pesquisa ampla de mercado, consulta a associações setoriais, prazos adequados, desenvolvimento de fornecedores, parcerias estratégicas",
         "correcao": "Revisão de especificações para ampliar concorrência"
       },
       {
@@ -632,7 +655,7 @@
         "nivel_risco": 12,
         "classificacao": "Alto",
         "responsavel": "Contratada",
-        "mitigacao": "Início antecipado dos processos, consulta prévia aos órgãos",
+        "mitigacao": "Início antecipado dos processos, consulta prévia aos órgãos, cronograma específico de licenciamento",
         "correcao": "Acompanhamento intensivo dos processos de licenciamento"
       },
       {
@@ -647,7 +670,7 @@
         "nivel_risco": 12,
         "classificacao": "Alto",
         "responsavel": "Contratada",
-        "mitigacao": "Segurança reforçada no canteiro, seguro específico, estoque mínimo no local",
+        "mitigacao": "Segurança reforçada no canteiro, seguro específico, estoque mínimo no local, rastreamento de equipamentos críticos, protocolo de segurança em 3 níveis",
         "correcao": "Acionamento de seguros, reforço da segurança"
       },
       {
@@ -692,7 +715,7 @@
         "nivel_risco": 10,
         "classificacao": "Alto",
         "responsavel": "Contratada",
-        "mitigacao": "Testes rigorosos, supervisão especializada, protocolos de validação",
+        "mitigacao": "Testes rigorosos, supervisão especializada, protocolos de validação, certificação por entidade independente, testes de penetração obrigatórios",
         "correcao": "Retrabalho sob supervisão de especialistas"
       },
       {
@@ -707,7 +730,7 @@
         "nivel_risco": 12,
         "classificacao": "Alto",
         "responsavel": "Contratada",
-        "mitigacao": "Testes de integração, protocolos padronizados, supervisão técnica",
+        "mitigacao": "Testes de integração, protocolos padronizados, supervisão técnica, arquitetura de referência, laboratório de testes dedicado",
         "correcao": "Reconfiguração e testes de integração"
       },
       {
@@ -940,14 +963,14 @@
         "fase": "Contratual (Execução)",
         "categoria": "Fiscalização Especializada",
         "evento": "Fiscalização inadequada para sistemas complexos",
-        "descricao": "Equipe sem conhecimento específico em tecnologias de segurança",
+        "descricao": "Equipe sem conhecimento específico em tecnologias de segurança, dificuldade na validação de conformidade LGPD, complexidade na verificação de interoperabilidade",
         "impacto": "Aceitação de serviços inadequados, problemas operacionais futuros",
-        "probabilidade": 2,
+        "probabilidade": 3,
         "impacto_nivel": 4,
-        "nivel_risco": 8,
+        "nivel_risco": 12,
         "classificacao": "Alto",
         "responsavel": "Contratante",
-        "mitigacao": "Capacitação de fiscais, apoio de consultoria técnica especializada",
+        "mitigacao": "Capacitação de fiscais, apoio de consultoria técnica especializada, certificação específica em sistemas de segurança para fiscais, protocolos de teste padronizados",
         "correcao": "Revisão técnica por especialistas externos"
       },
       {
@@ -1232,7 +1255,7 @@
         "nivel_risco": 9,
         "classificacao": "Moderado", 
         "responsavel": "Contratante",
-        "mitigacao": "Designação de fiscal qualificado, diário de obras, ensaios tecnológicos",
+        "mitigacao": "Designação de fiscal qualificado, diário de obras, ensaios tecnológicos, certificação específica em sistemas de segurança para fiscais, protocolos de teste padronizados para cada categoria de sistema",
         "correcao": "Intensificação da fiscalização, glosa de pagamentos, aplicação de sanções"
       },
       {
@@ -1337,7 +1360,7 @@
         "nivel_risco": 6,
         "classificacao": "Moderado",
         "responsavel": "Contratante",
-        "mitigacao": "Controle rigoroso de prazos de garantia, inspeções periódicas da obra",
+        "mitigacao": "Controle rigoroso de prazos de garantia, inspeções periódicas da obra, sistema de alerta automático, inspeções trimestrais obrigatórias",
         "correcao": "Notificação imediata da construtora, documentação de todos os vícios"
       },
       {
@@ -1369,6 +1392,156 @@
         "responsavel": "Contratante",
         "mitigacao": "Programa de treinamento obrigatório, manuais em português, certificação de operadores",
         "correcao": "Treinamento adicional urgente, suporte técnico especializado"
+      },
+      {
+        "id": 79,
+        "fase": "Planejamento da Contratação",
+        "categoria": "Capacitação Técnica",
+        "evento": "Desconhecimento sobre tecnologias emergentes em segurança",
+        "descricao": "Falta de conhecimento sobre novas metodologias, tecnologias e normas aplicáveis a sistemas de segurança pública",
+        "impacto": "Especificação de tecnologias obsoletas, perda de eficiência operacional, custos elevados de atualização posterior",
+        "probabilidade": 2,
+        "impacto_nivel": 3,
+        "nivel_risco": 6,
+        "classificacao": "Moderado",
+        "responsavel": "Contratante",
+        "mitigacao": "Benchmarking tecnológico, consulta a especialistas, análise de tendências do setor",
+        "correcao": "Suspensão da licitação para atualização das especificações tecnológicas"
+      },
+      {
+        "id": 80,
+        "fase": "Externa da Licitação",
+        "categoria": "Legal e Regulatório",
+        "evento": "Demora excessiva na análise jurídica do edital",
+        "descricao": "Atraso na aprovação jurídica por complexidade das especificações de segurança ou volume de análise",
+        "impacto": "Atraso no cronograma da licitação, prejuízo no cumprimento de prazos, descontinuidade de serviços",
+        "probabilidade": 3,
+        "impacto_nivel": 3,
+        "nivel_risco": 9,
+        "classificacao": "Moderado",
+        "responsavel": "Contratante",
+        "mitigacao": "Análise jurídica prévia e paralela ao desenvolvimento do edital, templates pré-aprovados",
+        "correcao": "Priorização da análise, revisão focada nos pontos críticos"
+      },
+      {
+        "id": 81,
+        "fase": "Externa da Licitação",
+        "categoria": "Gerencial e Operacional",
+        "evento": "Demora excessiva para assinatura do contrato e entrega de garantias",
+        "descricao": "Atrasos burocráticos internos ou da empresa para formalização contratual",
+        "impacto": "Postergação do início da obra, necessidade de reajustes, perda de janelas de execução",
+        "probabilidade": 2,
+        "impacto_nivel": 3,
+        "nivel_risco": 6,
+        "classificacao": "Moderado",
+        "responsavel": "Compartilhado",
+        "mitigacao": "Cronograma claro de formalização, documentação pré-organizada",
+        "correcao": "Aplicação de penalidades por atraso, aceleração dos trâmites"
+      },
+      {
+        "id": 82,
+        "fase": "Contratual (Execução)",
+        "categoria": "Orçamentário e Financeiro",
+        "evento": "Divergências na medição de serviços de segurança especializados",
+        "descricao": "Discordâncias entre contratada e fiscalização sobre medição de sistemas de segurança complexos",
+        "impacto": "Atrasos nos pagamentos, disputas contratuais, desmotivação da equipe",
+        "probabilidade": 3,
+        "impacto_nivel": 2,
+        "nivel_risco": 6,
+        "classificacao": "Moderado",
+        "responsavel": "Compartilhado",
+        "mitigacao": "Critérios objetivos de medição, protocolos detalhados de verificação",
+        "correcao": "Revisão técnica conjunta, arbitragem por especialista externo"
+      },
+      {
+        "id": 83,
+        "fase": "Contratual (Execução)",
+        "categoria": "Gerencial e Operacional",
+        "evento": "Documentação inadequada para processo de pagamento",
+        "descricao": "Falta ou inconsistência em documentos técnicos específicos para sistemas de segurança",
+        "impacto": "Atrasos nos pagamentos, fluxo de caixa prejudicado, possíveis disputas",
+        "probabilidade": 2,
+        "impacto_nivel": 2,
+        "nivel_risco": 4,
+        "classificacao": "Baixo",
+        "responsavel": "Contratada",
+        "mitigacao": "Checklist específico, templates padronizados, treinamento de equipes",
+        "correcao": "Complementação imediata da documentação, suporte técnico adicional"
+      },
+      {
+        "id": 84,
+        "fase": "Contratual (Execução)",
+        "categoria": "Legal e Regulatório",
+        "evento": "Descumprimento da Lei Geral de Proteção de Dados",
+        "descricao": "Violação de privacidade em sistemas de CFTV, controle de acesso ou dados biométricos",
+        "impacto": "Multas pesadas, responsabilização civil e criminal, comprometimento operacional",
+        "probabilidade": 2,
+        "impacto_nivel": 4,
+        "nivel_risco": 8,
+        "classificacao": "Alto",
+        "responsavel": "Contratada",
+        "mitigacao": "Compliance LGPD obrigatório, auditorias de conformidade, criptografia adequada",
+        "correcao": "Adequação imediata dos sistemas, revisão de processos de dados"
+      },
+      {
+        "id": 85,
+        "fase": "Contratual (Execução)",
+        "categoria": "Logística e Fornecimento",
+        "evento": "Ausência de fornecedores locais para materiais de segurança",
+        "descricao": "Indisponibilidade regional de fornecedores especializados em equipamentos de segurança",
+        "impacto": "Aumento de custos logísticos, atrasos nas entregas, dependência externa",
+        "probabilidade": 3,
+        "impacto_nivel": 2,
+        "nivel_risco": 6,
+        "classificacao": "Moderado",
+        "responsavel": "Contratada",
+        "mitigacao": "Mapeamento prévio de fornecedores, parcerias estratégicas, estoque de segurança",
+        "correcao": "Busca de fornecedores alternativos, ajuste no cronograma de entregas"
+      },
+      {
+        "id": 86,
+        "fase": "Contratual (Execução)",
+        "categoria": "Legal e Regulatório",
+        "evento": "Falta de Anotação de Responsabilidade Técnica para sistemas de segurança",
+        "descricao": "Não emissão de ART específica para sistemas complexos de segurança eletrônica",
+        "impacto": "Problemas de responsabilização técnica, dificuldades em garantias, implicações legais",
+        "probabilidade": 2,
+        "impacto_nivel": 3,
+        "nivel_risco": 6,
+        "classificacao": "Moderado",
+        "responsavel": "Contratada",
+        "mitigacao": "Exigência contratual específica, verificação prévia das competências",
+        "correcao": "Regularização imediata junto ao CREA, responsabilização adequada"
+      },
+      {
+        "id": 87,
+        "fase": "Contratual (Execução)",
+        "categoria": "Controle de Qualidade",
+        "evento": "Rejeição de entregas por não conformidade em requisitos de segurança",
+        "descricao": "Fiscalização rejeita etapas por falhas em testes de segurança ou especificações técnicas",
+        "impacto": "Atrasos significativos, retrabalho extenso, custos adicionais, desmotivação",
+        "probabilidade": 2,
+        "impacto_nivel": 3,
+        "nivel_risco": 6,
+        "classificacao": "Moderado",
+        "responsavel": "Contratada",
+        "mitigacao": "Protocolos rigorosos de auto-verificação, testes progressivos, validação prévia",
+        "correcao": "Plano de correção acelerado, supervisão técnica reforçada"
+      },
+      {
+        "id": 88,
+        "fase": "Contratual (Execução)",
+        "categoria": "Técnico e de Engenharia",
+        "evento": "Necessidade de adequação de soluções técnicas durante execução",
+        "descricao": "Identificação de incompatibilidades técnicas que exigem alteração das soluções propostas",
+        "impacto": "Retrabalho, custos adicionais, atrasos no cronograma, insatisfação do cliente",
+        "probabilidade": 2,
+        "impacto_nivel": 3,
+        "nivel_risco": 6,
+        "classificacao": "Moderado",
+        "responsavel": "Contratada",
+        "mitigacao": "Análise técnica prévia detalhada, validação de conceitos, prototipagem",
+        "correcao": "Revisão técnica especializada, adequação sem ônus adicional"
       }
     ]
   }
